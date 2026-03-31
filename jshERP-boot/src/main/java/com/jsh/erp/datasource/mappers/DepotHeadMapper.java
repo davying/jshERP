@@ -2,8 +2,9 @@ package com.jsh.erp.datasource.mappers;
 
 import com.jsh.erp.datasource.entities.DepotHead;
 import com.jsh.erp.datasource.entities.DepotHeadExample;
-import java.util.List;
 import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 public interface DepotHeadMapper {
     long countByExample(DepotHeadExample example);
@@ -27,4 +28,10 @@ public interface DepotHeadMapper {
     int updateByPrimaryKeySelective(DepotHead record);
 
     int updateByPrimaryKey(DepotHead record);
+
+    int updateByTotalMoney();
+
+    int updDepotHeadNumbers();
+
+    int updLogisticsStatus();
 }

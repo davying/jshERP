@@ -28,7 +28,7 @@ import java.util.Map;
 import static com.jsh.erp.utils.ResponseJsonUtil.returnJson;
 
 /**
- * @author ji|sheng|hua 华夏erp
+ * @author ji|sheng|hua 英诗澜得ERP
  */
 @RestController
 @RequestMapping(value = "/supplier")
@@ -51,12 +51,12 @@ public class SupplierController {
     @GetMapping(value = "/checkIsNameAndTypeExist")
     @ApiOperation(value = "检查名称和类型是否存在")
     public String checkIsNameAndTypeExist(@RequestParam Long id,
-                                          @RequestParam(value ="name", required = false) String name,
-                                          @RequestParam(value ="type") String type,
-                                          HttpServletRequest request)throws Exception {
+                                          @RequestParam(value = "name", required = false) String name,
+                                          @RequestParam(value = "type") String type,
+                                          HttpServletRequest request) throws Exception {
         Map<String, Object> objectMap = new HashMap<>();
         int exist = supplierService.checkIsNameAndTypeExist(id, name, type);
-        if(exist > 0) {
+        if (exist > 0) {
             objectMap.put("status", true);
         } else {
             objectMap.put("status", false);
@@ -66,6 +66,7 @@ public class SupplierController {
 
     /**
      * 查找客户信息-下拉框
+     *
      * @param request
      * @return
      */
@@ -93,7 +94,7 @@ public class SupplierController {
                 }
             }
             arr = dataArray;
-        } catch(Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return arr;
@@ -101,12 +102,13 @@ public class SupplierController {
 
     /**
      * 查找供应商信息-下拉框
+     *
      * @param request
      * @return
      */
     @PostMapping(value = "/findBySelect_sup")
     @ApiOperation(value = "查找供应商信息")
-    public JSONArray findBySelectSup(HttpServletRequest request) throws Exception{
+    public JSONArray findBySelectSup(HttpServletRequest request) throws Exception {
         JSONArray arr = new JSONArray();
         try {
             List<Supplier> supplierList = supplierService.findBySelectSup();
@@ -121,7 +123,7 @@ public class SupplierController {
                 }
             }
             arr = dataArray;
-        } catch(Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return arr;
@@ -129,12 +131,13 @@ public class SupplierController {
 
     /**
      * 查找往来单位，含供应商和客户信息-下拉框
+     *
      * @param request
      * @return
      */
     @PostMapping(value = "/findBySelect_organ")
     @ApiOperation(value = "查找往来单位，含供应商和客户信息")
-    public JSONArray findBySelectOrgan(HttpServletRequest request) throws Exception{
+    public JSONArray findBySelectOrgan(HttpServletRequest request) throws Exception {
         JSONArray arr = new JSONArray();
         try {
             JSONArray dataArray = new JSONArray();
@@ -166,7 +169,7 @@ public class SupplierController {
                 }
             }
             arr = dataArray;
-        } catch(Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return arr;
@@ -174,12 +177,13 @@ public class SupplierController {
 
     /**
      * 查找会员信息-下拉框
+     *
      * @param request
      * @return
      */
     @PostMapping(value = "/findBySelect_retail")
     @ApiOperation(value = "查找会员信息")
-    public JSONArray findBySelectRetail(HttpServletRequest request)throws Exception {
+    public JSONArray findBySelectRetail(HttpServletRequest request) throws Exception {
         JSONArray arr = new JSONArray();
         try {
             List<Supplier> supplierList = supplierService.findBySelectRetail();
@@ -195,7 +199,7 @@ public class SupplierController {
                 }
             }
             arr = dataArray;
-        } catch(Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return arr;
@@ -203,6 +207,7 @@ public class SupplierController {
 
     /**
      * 批量设置状态-启用或者禁用
+     *
      * @param jsonObject
      * @param request
      * @return
@@ -210,12 +215,12 @@ public class SupplierController {
     @PostMapping(value = "/batchSetStatus")
     @ApiOperation(value = "批量设置状态")
     public String batchSetStatus(@RequestBody JSONObject jsonObject,
-                                 HttpServletRequest request)throws Exception {
+                                 HttpServletRequest request) throws Exception {
         Boolean status = jsonObject.getBoolean("status");
         String ids = jsonObject.getString("ids");
         Map<String, Object> objectMap = new HashMap<>();
         int res = supplierService.batchSetStatus(status, ids);
-        if(res > 0) {
+        if (res > 0) {
             return returnJson(objectMap, ErpInfo.OK.name, ErpInfo.OK.code);
         } else {
             return returnJson(objectMap, ErpInfo.ERROR.name, ErpInfo.ERROR.code);
@@ -224,6 +229,7 @@ public class SupplierController {
 
     /**
      * 用户对应客户显示
+     *
      * @param type
      * @param keyId
      * @param request
@@ -232,7 +238,7 @@ public class SupplierController {
     @GetMapping(value = "/findUserCustomer")
     @ApiOperation(value = "用户对应客户显示")
     public JSONArray findUserCustomer(@RequestParam("UBType") String type, @RequestParam("UBKeyId") String keyId,
-                                   HttpServletRequest request) throws Exception{
+                                      HttpServletRequest request) throws Exception {
         JSONArray arr = new JSONArray();
         try {
             //获取权限信息
@@ -272,6 +278,7 @@ public class SupplierController {
 
     /**
      * 根据客户或供应商查询期初、期初已收等信息
+     *
      * @param organId
      * @param request
      * @return
@@ -280,7 +287,7 @@ public class SupplierController {
     @GetMapping(value = "/getBeginNeedByOrganId")
     @ApiOperation(value = "根据客户或供应商查询期初、期初已收等信息")
     public BaseResponseInfo getBeginNeedByOrganId(@RequestParam("organId") Long organId,
-                                        HttpServletRequest request)throws Exception {
+                                                  HttpServletRequest request) throws Exception {
         BaseResponseInfo res = new BaseResponseInfo();
         try {
             Map<String, Object> map = supplierService.getBeginNeedByOrganId(organId);
@@ -296,6 +303,7 @@ public class SupplierController {
 
     /**
      * 导入供应商
+     *
      * @param file
      * @param request
      * @param response
@@ -304,13 +312,13 @@ public class SupplierController {
     @PostMapping(value = "/importVendor")
     @ApiOperation(value = "导入供应商")
     public BaseResponseInfo importVendor(MultipartFile file,
-                            HttpServletRequest request, HttpServletResponse response) throws Exception{
+                                         HttpServletRequest request, HttpServletResponse response) throws Exception {
         BaseResponseInfo res = new BaseResponseInfo();
         try {
             supplierService.importVendor(file, request);
             res.code = 200;
             res.data = "导入成功";
-        } catch(Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
             res.code = 500;
             res.data = "导入失败";
@@ -320,6 +328,7 @@ public class SupplierController {
 
     /**
      * 导入客户
+     *
      * @param file
      * @param request
      * @param response
@@ -328,13 +337,13 @@ public class SupplierController {
     @PostMapping(value = "/importCustomer")
     @ApiOperation(value = "导入客户")
     public BaseResponseInfo importCustomer(MultipartFile file,
-                                        HttpServletRequest request, HttpServletResponse response) throws Exception{
+                                           HttpServletRequest request, HttpServletResponse response) throws Exception {
         BaseResponseInfo res = new BaseResponseInfo();
         try {
             supplierService.importCustomer(file, request);
             res.code = 200;
             res.data = "导入成功";
-        } catch(Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
             res.code = 500;
             res.data = "导入失败";
@@ -344,6 +353,7 @@ public class SupplierController {
 
     /**
      * 导入会员
+     *
      * @param file
      * @param request
      * @param response
@@ -352,13 +362,13 @@ public class SupplierController {
     @PostMapping(value = "/importMember")
     @ApiOperation(value = "导入会员")
     public BaseResponseInfo importMember(MultipartFile file,
-                                           HttpServletRequest request, HttpServletResponse response) throws Exception{
+                                         HttpServletRequest request, HttpServletResponse response) throws Exception {
         BaseResponseInfo res = new BaseResponseInfo();
         try {
             supplierService.importMember(file, request);
             res.code = 200;
             res.data = "导入成功";
-        } catch(Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
             res.code = 500;
             res.data = "导入失败";
@@ -368,6 +378,7 @@ public class SupplierController {
 
     /**
      * 生成excel表格
+     *
      * @param supplier
      * @param type
      * @param phonenum

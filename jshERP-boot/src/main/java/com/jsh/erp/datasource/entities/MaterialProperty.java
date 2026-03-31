@@ -1,63 +1,23 @@
 package com.jsh.erp.datasource.entities;
 
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+import lombok.Data;
+
+@Data
+@TableName("jsh_material_property")
+@ApiModel(value = "商品扩展信息对象", description = "商品扩展信息表")
 public class MaterialProperty {
+
+    @ApiModelProperty("主键")
+    @TableId(value = "id", type = IdType.AUTO)
     private Long id;
-
     private String nativeName;
-
     private Boolean enabled;
-
     private String sort;
-
     private String anotherName;
-
     private String deleteFlag;
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getNativeName() {
-        return nativeName;
-    }
-
-    public void setNativeName(String nativeName) {
-        this.nativeName = nativeName == null ? null : nativeName.trim();
-    }
-
-    public Boolean getEnabled() {
-        return enabled;
-    }
-
-    public void setEnabled(Boolean enabled) {
-        this.enabled = enabled;
-    }
-
-    public String getSort() {
-        return sort;
-    }
-
-    public void setSort(String sort) {
-        this.sort = sort == null ? null : sort.trim();
-    }
-
-    public String getAnotherName() {
-        return anotherName;
-    }
-
-    public void setAnotherName(String anotherName) {
-        this.anotherName = anotherName == null ? null : anotherName.trim();
-    }
-
-    public String getDeleteFlag() {
-        return deleteFlag;
-    }
-
-    public void setDeleteFlag(String deleteFlag) {
-        this.deleteFlag = deleteFlag == null ? null : deleteFlag.trim();
-    }
 }

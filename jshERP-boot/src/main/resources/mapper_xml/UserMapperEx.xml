@@ -21,7 +21,7 @@
         from (
         select user.id, user.username, user.login_name, user.position, user.leader_flag, user.email, user.phonenum,
         user.description, user.remark,user.isystem,org.id as orgaId,user.tenant_id,user.status,org.org_abr,
-        rel.user_blng_orga_dspl_seq,rel.id as orgaUserRelId
+        rel.user_blng_orga_dspl_seq,rel.id as orgaUserRelId,divide_type as divideType
         FROM jsh_user user
         left join jsh_orga_user_rel rel on user.id=rel.user_id and ifnull(rel.delete_flag,'0') !='1'
         left join jsh_organization org on rel.orga_id=org.id and ifnull(org.delete_flag,'0') !='1'
@@ -41,6 +41,56 @@
         </if>
         ) tb
     </select>
+
+    <select id="selectUserList"  resultType="java.util.Map">
+        SELECT user.id,user.username from jsh_user user WHERE user.status=0 and  user.id
+            in (SELECT ur.user_id from  jsh_orga_user_rel ur
+            WHERE ur.orga_id in (SELECT jo.id from jsh_organization jo WHERE
+            jo.id IN ( SELECT o.id from jsh_organization o
+        <where>
+        <if test="deptName != null and deptName != ''">
+           AND o.org_abr in
+            <foreach collection="deptName" item="item" index="index" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        </where>
+        )
+        or jo.parent_id IN ( SELECT o.id from jsh_organization o
+        <where>
+        <if test="deptName != null and deptName != ''">
+            AND o.org_abr in
+            <foreach collection="deptName" item="item" index="index" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        </where>
+        )))
+    </select>
+
+    <select id="selectConditionUserList" parameterType="java.lang.String" resultType="java.util.Map">
+        SELECT user.id,user.username from jsh_user user WHERE
+        1=1
+        -- and user.status=0
+        and user.id
+        in (SELECT ur.user_id from  jsh_orga_user_rel ur
+        WHERE ur.orga_id in (SELECT jo.id from jsh_organization jo WHERE
+        jo.id IN ( SELECT o.id from jsh_organization o
+        <where>
+            <if test="deptName != null and deptName != ''">
+                AND o.org_abr =#{deptName}
+            </if>
+        </where>
+        )
+        or jo.parent_id IN ( SELECT o.id from jsh_organization o
+        <where>
+            <if test="deptName != null and deptName != ''">
+                AND o.org_abr =#{deptName}
+            </if>
+        </where>
+        )))
+    </select>
+
     <select id="countsByUser" resultType="java.lang.Long">
         select count(user.id)
         FROM jsh_user user

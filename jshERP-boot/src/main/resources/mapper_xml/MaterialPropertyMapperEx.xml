@@ -25,6 +25,17 @@
         </if>
         and ifnull(delete_flag,'0') !='1'
     </select>
+    <select id="countsByMaterialProperty2" resultType="java.lang.Long">
+        SELECT
+        COUNT(id)
+        FROM jsh_material_property
+        WHERE 1=1
+        <if test="name != null">
+            and native_name = #{name}
+        </if>
+        and ifnull(delete_flag,'0') !='1'
+    </select>
+
     <update id="batchDeleteMaterialPropertyByIds">
         update jsh_material_property
         set delete_flag='1'

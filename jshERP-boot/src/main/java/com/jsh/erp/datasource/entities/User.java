@@ -1,6 +1,30 @@
 package com.jsh.erp.datasource.entities;
 
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+import lombok.Data;
+
+@Data
+
+@TableName("jsh_user")
+@ApiModel(value = "User对象", description = "用户信息表")
+//public class Commodity {
+//
+//    @ApiModelProperty("主键")
+//    @TableId(value = "id", type = IdType.AUTO)
+//    private Long id;
+//
+//    @ApiModelProperty("货品名称")
+//    @TableField("`name`")
+//    private String name;
 public class User {
+
+    @ApiModelProperty("主键")
+    @TableId(value = "id", type = IdType.AUTO)
     private Long id;
 
     private String username;
@@ -33,131 +57,10 @@ public class User {
 
     private Long tenantId;
 
-    public Long getId() {
-        return id;
-    }
+    private Integer divideType;
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username == null ? null : username.trim();
-    }
-
-    public String getLoginName() {
-        return loginName;
-    }
-
-    public void setLoginName(String loginName) {
-        this.loginName = loginName == null ? null : loginName.trim();
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password == null ? null : password.trim();
-    }
-
-    public String getLeaderFlag() {
-        return leaderFlag;
-    }
-
-    public void setLeaderFlag(String leaderFlag) {
-        this.leaderFlag = leaderFlag == null ? null : leaderFlag.trim();
-    }
-
-    public String getPosition() {
-        return position;
-    }
-
-    public void setPosition(String position) {
-        this.position = position == null ? null : position.trim();
-    }
-
-    public String getDepartment() {
-        return department;
-    }
-
-    public void setDepartment(String department) {
-        this.department = department == null ? null : department.trim();
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email == null ? null : email.trim();
-    }
-
-    public String getPhonenum() {
-        return phonenum;
-    }
-
-    public void setPhonenum(String phonenum) {
-        this.phonenum = phonenum == null ? null : phonenum.trim();
-    }
-
-    public Byte getIsmanager() {
-        return ismanager;
-    }
-
-    public void setIsmanager(Byte ismanager) {
-        this.ismanager = ismanager;
-    }
-
-    public Byte getIsystem() {
-        return isystem;
-    }
-
-    public void setIsystem(Byte isystem) {
-        this.isystem = isystem;
-    }
-
-    public Byte getStatus() {
-        return status;
-    }
-
-    public void setStatus(Byte status) {
-        this.status = status;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description == null ? null : description.trim();
-    }
-
-    public String getRemark() {
-        return remark;
-    }
-
-    public void setRemark(String remark) {
-        this.remark = remark == null ? null : remark.trim();
-    }
-
-    public String getWeixinOpenId() {
-        return weixinOpenId;
-    }
-
-    public void setWeixinOpenId(String weixinOpenId) {
-        this.weixinOpenId = weixinOpenId == null ? null : weixinOpenId.trim();
-    }
-
-    public Long getTenantId() {
-        return tenantId;
-    }
-
-    public void setTenantId(Long tenantId) {
-        this.tenantId = tenantId;
-    }
+    @TableField(exist = false)
+    private String roleName;
+    @TableField("password_str")
+    private String passwordStr;
 }

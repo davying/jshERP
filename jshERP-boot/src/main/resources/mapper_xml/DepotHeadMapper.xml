@@ -620,4 +620,32 @@
       delete_flag = #{deleteFlag,jdbcType=VARCHAR}
     where id = #{id,jdbcType=BIGINT}
   </update>
+
+  <update id="updateByTotalMoney" >
+    update jsh_depot_head set total_financial_price = numbers*financial_unit_price
+    WHERE numbers*financial_unit_price!=total_financial_price
+  </update>
+
+  <update id="updDepotHeadNumbers" >
+    UPDATE jsh_depot_head
+    SET size1 = 0,
+        size2 = 0,
+        size3 = 0,
+        size4 = 0,
+        size5 = 0,
+        size6 = 0,
+        size7 = 0,
+        size8 = 0,
+        size9 = 0,
+        size10 = 0,
+        size11  = 0
+    WHERE
+        size1 + size2 + size3 + size4 + size5 + size6 + size7 + size8 + size9 + size10 + size11 != numbers
+	AND numbers =0
+  </update>
+
+  <update id="updLogisticsStatus" >
+    UPDATE  jsh_depot_head a INNER JOIN jsh_warehouse_management b on ( a.number=b.depot_id and b.type='全部发货') set a.logistics_status=2 WHERE a.logistics_status!=2
+  </update>
+
 </mapper>

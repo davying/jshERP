@@ -13,10 +13,11 @@ import java.io.IOException;
 
 @WebFilter(filterName = "LogCostFilter", urlPatterns = {"/*"},
         initParams = {@WebInitParam(name = "filterPath",
-                      value = "/jshERP-boot/user/login#/jshERP-boot/user/weixinLogin#/jshERP-boot/user/weixinBind#" +
-                              "/jshERP-boot/user/registerUser#/jshERP-boot/user/randomImage#" +
-                              "/jshERP-boot/platformConfig/getPlatform#/jshERP-boot/v2/api-docs#/jshERP-boot/webjars#" +
-                              "/jshERP-boot/systemConfig/static#/jshERP-boot/api/plugin/wechat/weChat/share")})
+                value = "/jshERP-boot/user/login#/jshERP-boot/user/weixinLogin#/jshERP-boot/user/weixinBind#" +
+                        "/jshERP-boot/user/registerUser#/jshERP-boot/user/randomImage#" +
+                        "/jshERP-boot/systemConfig/upload#" +
+                        "/jshERP-boot/platformConfig/getPlatform#/jshERP-boot/v2/api-docs#/jshERP-boot/webjars#" +
+                        "/jshERP-boot/systemConfig/static#/jshERP-boot/api/plugin/wechat/weChat/share")})
 public class LogCostFilter implements Filter {
 
     private static final String FILTER_PATH = "filterPath";
@@ -40,13 +41,14 @@ public class LogCostFilter implements Filter {
         HttpServletResponse servletResponse = (HttpServletResponse) response;
         String requestUrl = servletRequest.getRequestURI();
         //具体，比如：处理若用户未登录，则跳转到登录页
-        Object userId = redisService.getObjectFromSessionByKey(servletRequest,"userId");
-        if(userId!=null) { //如果已登录，不阻止
+        Object userId = redisService.getObjectFromSessionByKey(servletRequest, "userId");
+        if (userId != null) { //如果已登录，不阻止
             chain.doFilter(request, response);
             return;
         }
-        if (requestUrl != null && (requestUrl.contains("/doc.html") ||
-            requestUrl.contains("/user/login") || requestUrl.contains("/user/register"))) {
+        if (requestUrl != null && (requestUrl.contains("/doc.html") || requestUrl.contains("/api/analyse/") ||
+                requestUrl.contains("/user/login") || requestUrl.contains("/user/register") || requestUrl.contains("interface-ui")
+        )) {
             chain.doFilter(request, response);
             return;
         }
@@ -59,7 +61,7 @@ public class LogCostFilter implements Filter {
             }
         }
         servletResponse.setStatus(500);
-        if(requestUrl != null && !requestUrl.contains("/user/logout") && !requestUrl.contains("/function/findMenuByPNumber")) {
+        if (requestUrl != null && !requestUrl.contains("/user/logout") && !requestUrl.contains("/function/findMenuByPNumber")) {
             servletResponse.getWriter().write("loginOut");
         }
     }

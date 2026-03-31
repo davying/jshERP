@@ -6,16 +6,14 @@ import com.jsh.erp.service.systemConfig.SystemConfigService;
 import com.jsh.erp.service.user.UserService;
 import com.jsh.erp.service.userBusiness.UserBusinessService;
 import com.jsh.erp.utils.BaseResponseInfo;
-import com.jsh.erp.utils.FileUtils;
 import com.jsh.erp.utils.StringUtil;
-import com.jsh.erp.utils.Tools;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.util.AntPathMatcher;
-import org.springframework.util.FileCopyUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -34,10 +32,12 @@ import java.util.List;
 
 /**
  * Description
+ *
  * @Author: jishenghua
  * @Date: 2021-3-13 0:01
  */
 @RestController
+@Slf4j
 @RequestMapping(value = "/systemConfig")
 @Api(tags = {"系统参数"})
 public class SystemConfigController {
@@ -55,20 +55,34 @@ public class SystemConfigController {
     @Resource
     private SystemConfigService systemConfigService;
 
-    @Value(value="${file.uploadType}")
+    @Value(value = "${file.uploadType}")
     private Long fileUploadType;
 
-    @Value(value="${file.path}")
+    @Value(value = "${file.path}")
     private String filePath;
 
-    @Value(value="${spring.servlet.multipart.max-file-size}")
+    @Value(value = "${spring.servlet.multipart.max-file-size}")
     private Long maxFileSize;
 
-    @Value(value="${spring.servlet.multipart.max-request-size}")
+    @Value(value = "${spring.servlet.multipart.max-request-size}")
     private Long maxRequestSize;
 
     /**
+     * 把指定URL后的字符串全部截断当成参数
+     * 这么做是为了防止URL中包含中文或者特殊字符（/等）时，匹配不了的问题
+     *
+     * @param request
+     * @return
+     */
+    private static String extractPathFromPattern(final HttpServletRequest request) {
+        String path = (String) request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
+        String bestMatchPattern = (String) request.getAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE);
+        return new AntPathMatcher().extractPathWithinPattern(bestMatchPattern, path);
+    }
+
+    /**
      * 获取当前租户的配置信息
+     *
      * @param request
      * @return
      */
@@ -76,13 +90,13 @@ public class SystemConfigController {
     @ApiOperation(value = "获取当前租户的配置信息")
     public BaseResponseInfo getCurrentInfo(HttpServletRequest request) throws Exception {
         BaseResponseInfo res = new BaseResponseInfo();
-        try{
+        try {
             List<SystemConfig> list = systemConfigService.getSystemConfig();
             res.code = 200;
-            if(list.size()>0) {
+            if (list.size() > 0) {
                 res.data = list.get(0);
             }
-        } catch(Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
             res.code = 500;
             res.data = "获取数据失败";
@@ -92,6 +106,7 @@ public class SystemConfigController {
 
     /**
      * 获取文件大小限制
+     *
      * @param request
      * @return
      * @throws Exception
@@ -100,16 +115,16 @@ public class SystemConfigController {
     @ApiOperation(value = "获取文件大小限制")
     public BaseResponseInfo fileSizeLimit(HttpServletRequest request) throws Exception {
         BaseResponseInfo res = new BaseResponseInfo();
-        try{
+        try {
             Long limit = 0L;
-            if(maxFileSize<maxRequestSize) {
+            if (maxFileSize < maxRequestSize) {
                 limit = maxFileSize;
             } else {
                 limit = maxRequestSize;
             }
             res.code = 200;
             res.data = limit;
-        } catch(Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
             res.code = 500;
             res.data = "获取数据失败";
@@ -119,6 +134,7 @@ public class SystemConfigController {
 
     /**
      * 文件上传统一方法
+     *
      * @param request
      * @param response
      * @return
@@ -133,15 +149,22 @@ public class SystemConfigController {
             String name = request.getParameter("name");
             MultipartHttpServletRequest multipartRequest = (MultipartHttpServletRequest) request;
             MultipartFile file = multipartRequest.getFile("file");// 获取上传文件对象
-            if(fileUploadType == 1) {
+            long maxSize = 15 * 1024 * 1024; // 5MB
+            if (file.getSize() > maxSize) {
+                res.code = 500;
+                res.data = "请上传小于15M的文件！";
+                return res;
+            }
+            if (fileUploadType == 1) {
+                name = file.getOriginalFilename();
                 savePath = systemConfigService.uploadLocal(file, bizPath, name, request);
-            } else if(fileUploadType == 2) {
+            } else if (fileUploadType == 2) {
                 savePath = systemConfigService.uploadAliOss(file, bizPath, name, request);
             }
-            if(StringUtil.isNotEmpty(savePath)){
+            if (StringUtil.isNotEmpty(savePath)) {
                 res.code = 200;
                 res.data = savePath;
-            }else {
+            } else {
                 res.code = 500;
                 res.data = "上传失败！";
             }
@@ -165,7 +188,7 @@ public class SystemConfigController {
     public void view(HttpServletRequest request, HttpServletResponse response) {
         // ISO-8859-1 ==> UTF-8 进行编码转换
         String imgPath = extractPathFromPattern(request);
-        if(StringUtil.isEmpty(imgPath) || imgPath=="null"){
+        if (StringUtil.isEmpty(imgPath) || imgPath == "null") {
             return;
         }
         // 其余处理略
@@ -176,18 +199,19 @@ public class SystemConfigController {
             if (imgPath.endsWith(",")) {
                 imgPath = imgPath.substring(0, imgPath.length() - 1);
             }
+            log.info("预览图片&下载文件:" + imgPath);
             String fileUrl = "";
-            if(fileUploadType == 1) {
+            if (fileUploadType == 1) {
                 fileUrl = systemConfigService.getFileUrlLocal(imgPath);
                 File file = new File(fileUrl);
-                if(!file.exists()){
+                if (!file.exists()) {
                     response.setStatus(404);
                     throw new RuntimeException("文件不存在..");
                 }
                 response.setContentType("application/force-download");// 设置强制下载不打开
-                response.addHeader("Content-Disposition", "attachment;fileName=" + new String(file.getName().getBytes("UTF-8"),"iso-8859-1"));
+                response.addHeader("Content-Disposition", "attachment;fileName=" + new String(file.getName().getBytes("UTF-8"), "iso-8859-1"));
                 inputStream = new BufferedInputStream(new FileInputStream(fileUrl));
-            } else if(fileUploadType == 2) {
+            } else if (fileUploadType == 2) {
                 fileUrl = systemConfigService.getFileUrlAliOss(imgPath);
                 URL url = new URL(fileUrl);
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -225,17 +249,5 @@ public class SystemConfigController {
                 }
             }
         }
-    }
-
-    /**
-     *  把指定URL后的字符串全部截断当成参数
-     *  这么做是为了防止URL中包含中文或者特殊字符（/等）时，匹配不了的问题
-     * @param request
-     * @return
-     */
-    private static String extractPathFromPattern(final HttpServletRequest request) {
-        String path = (String) request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
-        String bestMatchPattern = (String) request.getAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE);
-        return new AntPathMatcher().extractPathWithinPattern(bestMatchPattern, path);
     }
 }

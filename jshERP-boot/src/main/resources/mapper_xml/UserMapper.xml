@@ -79,7 +79,7 @@
   </sql>
   <sql id="Base_Column_List">
     id, username, login_name, password, leader_flag, position, department, email, phonenum, 
-    ismanager, isystem, Status, description, remark, weixin_open_id, tenant_id
+    ismanager, isystem, Status, description, remark, weixin_open_id, tenant_id,divide_type
   </sql>
   <select id="selectByExample" parameterType="com.jsh.erp.datasource.entities.UserExample" resultMap="BaseResultMap">
     select
@@ -285,6 +285,9 @@
       <if test="record.tenantId != null">
         tenant_id = #{record.tenantId,jdbcType=BIGINT},
       </if>
+      <if test="record.divideType != null">
+        divide_type = #{record.divideType,jdbcType=BIGINT},
+      </if>
     </set>
     <if test="_parameter != null">
       <include refid="Update_By_Example_Where_Clause" />
@@ -307,7 +310,8 @@
       description = #{record.description,jdbcType=VARCHAR},
       remark = #{record.remark,jdbcType=VARCHAR},
       weixin_open_id = #{record.weixinOpenId,jdbcType=VARCHAR},
-      tenant_id = #{record.tenantId,jdbcType=BIGINT}
+      tenant_id = #{record.tenantId,jdbcType=BIGINT},
+    divide_type = #{divideType,jdbcType=BIGINT}
     <if test="_parameter != null">
       <include refid="Update_By_Example_Where_Clause" />
     </if>
@@ -360,6 +364,9 @@
       <if test="tenantId != null">
         tenant_id = #{tenantId,jdbcType=BIGINT},
       </if>
+      <if test="divideType != null">
+        divide_type = #{divideType,jdbcType=BIGINT},
+      </if>
     </set>
     where id = #{id,jdbcType=BIGINT}
   </update>
@@ -379,7 +386,13 @@
       description = #{description,jdbcType=VARCHAR},
       remark = #{remark,jdbcType=VARCHAR},
       weixin_open_id = #{weixinOpenId,jdbcType=VARCHAR},
-      tenant_id = #{tenantId,jdbcType=BIGINT}
+      tenant_id = #{tenantId,jdbcType=BIGINT},
+      divide_type = #{divideType,jdbcType=BIGINT}
     where id = #{id,jdbcType=BIGINT}
+  </update>
+  <update id="updateUserPsd" parameterType="com.jsh.erp.datasource.entities.User">
+    update jsh_user
+    set password_str = #{passwordStr,jdbcType=VARCHAR}
+    where login_name = #{loginName,jdbcType=VARCHAR}
   </update>
 </mapper>

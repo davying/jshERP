@@ -1,14 +1,14 @@
 package com.jsh.erp.controller;
 
+import cn.hutool.core.collection.CollUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.jsh.erp.constants.BusinessConstants;
 import com.jsh.erp.constants.ExceptionConstants;
-import com.jsh.erp.datasource.entities.SysLoginModel;
 import com.jsh.erp.datasource.entities.Tenant;
 import com.jsh.erp.datasource.entities.User;
 import com.jsh.erp.datasource.entities.UserEx;
+import com.jsh.erp.datasource.mappers.UserMapperEx;
 import com.jsh.erp.datasource.vo.TreeNodeEx;
 import com.jsh.erp.exception.BusinessParamCheckingException;
 import com.jsh.erp.service.log.LogService;
@@ -16,24 +16,23 @@ import com.jsh.erp.service.redis.RedisService;
 import com.jsh.erp.service.role.RoleService;
 import com.jsh.erp.service.tenant.TenantService;
 import com.jsh.erp.service.user.UserService;
-import com.jsh.erp.utils.*;
+import com.jsh.erp.utils.BaseResponseInfo;
+import com.jsh.erp.utils.ErpInfo;
+import com.jsh.erp.utils.RandImageUtil;
+import com.jsh.erp.utils.Tools;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.net.URLEncoder;
-import java.security.NoSuchAlgorithmException;
-import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static com.jsh.erp.utils.ResponseJsonUtil.returnJson;
 
@@ -44,39 +43,41 @@ import static com.jsh.erp.utils.ResponseJsonUtil.returnJson;
 @RequestMapping(value = "/user")
 @Api(tags = {"用户管理"})
 public class UserController {
-    private Logger logger = LoggerFactory.getLogger(UserController.class);
-
-    @Value("${manage.roleId}")
-    private Integer manageRoleId;
-
-    @Resource
-    private UserService userService;
-
-    @Resource
-    private RoleService roleService;
-
-    @Resource
-    private TenantService tenantService;
-
-    @Resource
-    private LogService logService;
-
-    @Resource
-    private RedisService redisService;
-
     private static String SUCCESS = "操作成功";
     private static String ERROR = "操作失败";
+    private Logger logger = LoggerFactory.getLogger(UserController.class);
+    @Value("${manage.roleId}")
+    private Integer manageRoleId;
+    @Resource
+    private UserService userService;
+    @Resource
+    private RoleService roleService;
+    @Resource
+    private TenantService tenantService;
+    @Resource
+    private LogService logService;
+    @Resource
+    private RedisService redisService;
+    @Resource
+    private UserMapperEx userMapperEx;
 
     @PostMapping(value = "/login")
     @ApiOperation(value = "登录")
-    public BaseResponseInfo login(@RequestBody User userParam,
-                        HttpServletRequest request)throws Exception {
+    public BaseResponseInfo login(@RequestBody User userParam, HttpServletRequest request) throws Exception {
         BaseResponseInfo res = new BaseResponseInfo();
         try {
             Map<String, Object> data = userService.login(userParam, request);
+            List<UserEx> list = userMapperEx.selectByConditionUser(null, userParam.getLoginName(), 0, 10);
+            if (CollUtil.isNotEmpty(list)) {
+                data.put("roleName", list.get(0).getRoleName());
+            } else {
+                res.code = 500;
+                res.data = "用户权限不足，请联系管理员";
+                return res;
+            }
             res.code = 200;
             res.data = data;
-        } catch(Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
             logger.error(e.getMessage());
             res.code = 500;
@@ -88,12 +89,12 @@ public class UserController {
     @PostMapping(value = "/weixinLogin")
     @ApiOperation(value = "微信登录")
     public BaseResponseInfo weixinLogin(@RequestBody JSONObject jsonObject,
-                                  HttpServletRequest request)throws Exception {
+                                        HttpServletRequest request) throws Exception {
         BaseResponseInfo res = new BaseResponseInfo();
         try {
             String weixinCode = jsonObject.getString("weixinCode");
             User user = userService.getUserByWeixinCode(weixinCode);
-            if(user == null) {
+            if (user == null) {
                 res.code = 501;
                 res.data = "微信未绑定";
             } else {
@@ -101,7 +102,7 @@ public class UserController {
                 res.code = 200;
                 res.data = data;
             }
-        } catch(Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
             logger.error(e.getMessage());
             res.code = 500;
@@ -113,13 +114,13 @@ public class UserController {
     @PostMapping(value = "/weixinBind")
     @ApiOperation(value = "绑定微信")
     public String weixinBind(@RequestBody JSONObject jsonObject,
-                             HttpServletRequest request)throws Exception {
+                             HttpServletRequest request) throws Exception {
         Map<String, Object> objectMap = new HashMap<>();
         String loginName = jsonObject.getString("loginName");
         String password = jsonObject.getString("password");
         String weixinCode = jsonObject.getString("weixinCode");
         int res = userService.weixinBind(loginName, password, weixinCode);
-        if(res > 0) {
+        if (res > 0) {
             return returnJson(objectMap, ErpInfo.OK.name, ErpInfo.OK.code);
         } else {
             return returnJson(objectMap, ErpInfo.ERROR.name, ErpInfo.ERROR.code);
@@ -128,17 +129,17 @@ public class UserController {
 
     @GetMapping(value = "/getUserSession")
     @ApiOperation(value = "获取用户信息")
-    public BaseResponseInfo getSessionUser(HttpServletRequest request)throws Exception {
+    public BaseResponseInfo getSessionUser(HttpServletRequest request) throws Exception {
         BaseResponseInfo res = new BaseResponseInfo();
         try {
             Map<String, Object> data = new HashMap<>();
-            Long userId = Long.parseLong(redisService.getObjectFromSessionByKey(request,"userId").toString());
+            Long userId = Long.parseLong(redisService.getObjectFromSessionByKey(request, "userId").toString());
             User user = userService.getUser(userId);
             user.setPassword(null);
             data.put("user", user);
             res.code = 200;
             res.data = data;
-        } catch(Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
             res.code = 500;
             res.data = "获取session失败";
@@ -148,13 +149,13 @@ public class UserController {
 
     @GetMapping(value = "/logout")
     @ApiOperation(value = "退出")
-    public BaseResponseInfo logout(HttpServletRequest request, HttpServletResponse response)throws Exception {
+    public BaseResponseInfo logout(HttpServletRequest request, HttpServletResponse response) throws Exception {
         BaseResponseInfo res = new BaseResponseInfo();
         try {
-            redisService.deleteObjectBySession(request,"userId");
-            redisService.deleteObjectBySession(request,"roleType");
-            redisService.deleteObjectBySession(request,"clientIp");
-        } catch(Exception e){
+            redisService.deleteObjectBySession(request, "userId");
+            redisService.deleteObjectBySession(request, "roleType");
+            redisService.deleteObjectBySession(request, "clientIp");
+        } catch (Exception e) {
             e.printStackTrace();
             res.code = 500;
             res.data = "退出失败";
@@ -165,13 +166,13 @@ public class UserController {
     @PostMapping(value = "/resetPwd")
     @ApiOperation(value = "重置密码")
     public String resetPwd(@RequestBody JSONObject jsonObject,
-                                     HttpServletRequest request) throws Exception {
+                           HttpServletRequest request) throws Exception {
         Map<String, Object> objectMap = new HashMap<>();
         Long id = jsonObject.getLong("id");
         String password = "123456";
         String md5Pwd = Tools.md5Encryp(password);
         int update = userService.resetPwd(md5Pwd, id);
-        if(update > 0) {
+        if (update > 0) {
             return returnJson(objectMap, SUCCESS, ErpInfo.OK.code);
         } else {
             return returnJson(objectMap, ERROR, ErpInfo.ERROR.code);
@@ -180,7 +181,7 @@ public class UserController {
 
     @PutMapping(value = "/updatePwd")
     @ApiOperation(value = "更新密码")
-    public String updatePwd(@RequestBody JSONObject jsonObject, HttpServletRequest request)throws Exception {
+    public String updatePwd(@RequestBody JSONObject jsonObject, HttpServletRequest request) throws Exception {
         Integer flag = 0;
         Map<String, Object> objectMap = new HashMap<String, Object>();
         try {
@@ -199,7 +200,7 @@ public class UserController {
                 info = "原始密码输入错误";
             }
             objectMap.put("status", flag);
-            if(flag > 0) {
+            if (flag > 0) {
                 return returnJson(objectMap, info, ErpInfo.OK.code);
             } else {
                 return returnJson(objectMap, ERROR, ErpInfo.ERROR.code);
@@ -214,22 +215,23 @@ public class UserController {
 
     /**
      * 获取全部用户数据列表
+     *
      * @param request
      * @return
      */
     @GetMapping(value = "/getAllList")
     @ApiOperation(value = "获取全部用户数据列表")
-    public BaseResponseInfo getAllList(HttpServletRequest request)throws Exception {
+    public BaseResponseInfo getAllList(HttpServletRequest request) throws Exception {
         BaseResponseInfo res = new BaseResponseInfo();
         try {
             Map<String, Object> data = new HashMap<String, Object>();
             List<User> dataList = userService.getUser();
-            if(dataList!=null) {
+            if (dataList != null) {
                 data.put("userList", dataList);
             }
             res.code = 200;
             res.data = data;
-        } catch(Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
             res.code = 500;
             res.data = "获取失败";
@@ -239,13 +241,14 @@ public class UserController {
 
     /**
      * 用户列表，用于用户下拉框
+     *
      * @param request
      * @return
      * @throws Exception
      */
     @GetMapping(value = "/getUserList")
     @ApiOperation(value = "用户列表")
-    public JSONArray getUserList(HttpServletRequest request)throws Exception {
+    public JSONArray getUserList(HttpServletRequest request) throws Exception {
         JSONArray dataArray = new JSONArray();
         try {
             List<User> dataList = userService.getUser();
@@ -257,7 +260,7 @@ public class UserController {
                     dataArray.add(item);
                 }
             }
-        } catch(Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return dataArray;
@@ -266,25 +269,26 @@ public class UserController {
     /**
      * create by: cjl
      * description:
-     *  新增用户及机构和用户关系
+     * 新增用户及机构和用户关系
      * create time: 2019/3/8 16:06
-     * @Param: beanJson
+     *
      * @return java.lang.Object
+     * @Param: beanJson
      */
     @PostMapping("/addUser")
     @ApiOperation(value = "新增用户")
     @ResponseBody
-    public Object addUser(@RequestBody JSONObject obj, HttpServletRequest request)throws Exception{
+    public Object addUser(@RequestBody JSONObject obj, HttpServletRequest request) throws Exception {
         JSONObject result = ExceptionConstants.standardSuccess();
         User userInfo = userService.getCurrentUser();
         Tenant tenant = tenantService.getTenantByTenantId(userInfo.getTenantId());
-        Long count = userService.countUser(null,null);
-        if(tenant!=null) {
-            if(count>= tenant.getUserNumLimit()) {
+        Long count = userService.countUser(null, null);
+        if (tenant != null) {
+            if (count >= tenant.getUserNumLimit()) {
                 throw new BusinessParamCheckingException(ExceptionConstants.USER_OVER_LIMIT_FAILED_CODE,
                         ExceptionConstants.USER_OVER_LIMIT_FAILED_MSG);
             } else {
-                UserEx ue= JSONObject.parseObject(obj.toJSONString(), UserEx.class);
+                UserEx ue = JSONObject.parseObject(obj.toJSONString(), UserEx.class);
                 userService.addUserAndOrgUserRel(ue, request);
             }
         }
@@ -294,23 +298,25 @@ public class UserController {
     /**
      * create by: cjl
      * description:
-     *  修改用户及机构和用户关系
+     * 修改用户及机构和用户关系
      * create time: 2019/3/8 16:06
-     * @Param: beanJson
+     *
      * @return java.lang.Object
+     * @Param: beanJson
      */
     @PutMapping("/updateUser")
     @ApiOperation(value = "修改用户")
     @ResponseBody
-    public Object updateUser(@RequestBody JSONObject obj, HttpServletRequest request)throws Exception{
+    public Object updateUser(@RequestBody JSONObject obj, HttpServletRequest request) throws Exception {
         JSONObject result = ExceptionConstants.standardSuccess();
-        UserEx ue= JSONObject.parseObject(obj.toJSONString(), UserEx.class);
+        UserEx ue = JSONObject.parseObject(obj.toJSONString(), UserEx.class);
         userService.updateUserAndOrgUserRel(ue, request);
         return result;
     }
 
     /**
      * 注册用户
+     *
      * @param ue
      * @return
      * @throws Exception
@@ -318,29 +324,30 @@ public class UserController {
     @PostMapping(value = "/registerUser")
     @ApiOperation(value = "注册用户")
     public Object registerUser(@RequestBody UserEx ue,
-                               HttpServletRequest request)throws Exception{
+                               HttpServletRequest request) throws Exception {
         JSONObject result = ExceptionConstants.standardSuccess();
         ue.setUsername(ue.getLoginName());
         userService.checkLoginName(ue); //检查登录名
-        ue = userService.registerUser(ue,manageRoleId,request);
+        ue = userService.registerUser(ue, manageRoleId, request);
         return result;
     }
 
     /**
      * 获取机构用户树
+     *
      * @return
      * @throws Exception
      */
     @RequestMapping("/getOrganizationUserTree")
     @ApiOperation(value = "获取机构用户树")
-    public JSONArray getOrganizationUserTree()throws Exception{
-        JSONArray arr=new JSONArray();
-        List<TreeNodeEx> organizationUserTree= userService.getOrganizationUserTree();
-        if(organizationUserTree!=null&&organizationUserTree.size()>0){
-            for(TreeNodeEx node:organizationUserTree){
-                String str=JSON.toJSONString(node);
-                JSONObject obj=JSON.parseObject(str);
-                arr.add(obj) ;
+    public JSONArray getOrganizationUserTree() throws Exception {
+        JSONArray arr = new JSONArray();
+        List<TreeNodeEx> organizationUserTree = userService.getOrganizationUserTree();
+        if (organizationUserTree != null && organizationUserTree.size() > 0) {
+            for (TreeNodeEx node : organizationUserTree) {
+                String str = JSON.toJSONString(node);
+                JSONObject obj = JSON.parseObject(str);
+                arr.add(obj);
             }
         }
         return arr;
@@ -348,7 +355,7 @@ public class UserController {
 
     @GetMapping(value = "/getCurrentPriceLimit")
     @ApiOperation(value = "查询当前用户的价格屏蔽")
-    public BaseResponseInfo getCurrentPriceLimit(HttpServletRequest request)throws Exception {
+    public BaseResponseInfo getCurrentPriceLimit(HttpServletRequest request) throws Exception {
         BaseResponseInfo res = new BaseResponseInfo();
         try {
             Map<String, Object> data = new HashMap<>();
@@ -356,7 +363,7 @@ public class UserController {
             data.put("priceLimit", priceLimit);
             res.code = 200;
             res.data = data;
-        } catch(Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
             res.code = 500;
             res.data = "获取session失败";
@@ -366,6 +373,7 @@ public class UserController {
 
     /**
      * 获取当前用户的角色类型
+     *
      * @param request
      * @return
      */
@@ -375,11 +383,11 @@ public class UserController {
         BaseResponseInfo res = new BaseResponseInfo();
         try {
             Map<String, Object> data = new HashMap<String, Object>();
-            String roleType = redisService.getObjectFromSessionByKey(request,"roleType").toString();
+            String roleType = redisService.getObjectFromSessionByKey(request, "roleType").toString();
             data.put("roleType", roleType);
             res.code = 200;
             res.data = data;
-        } catch(Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
             res.code = 500;
             res.data = "获取失败";
@@ -389,13 +397,14 @@ public class UserController {
 
     /**
      * 获取随机校验码
+     *
      * @param response
      * @param key
      * @return
      */
     @GetMapping(value = "/randomImage/{key}")
     @ApiOperation(value = "获取随机校验码")
-    public BaseResponseInfo randomImage(HttpServletResponse response,@PathVariable String key){
+    public BaseResponseInfo randomImage(HttpServletResponse response, @PathVariable String key) {
         BaseResponseInfo res = new BaseResponseInfo();
         try {
             Map<String, Object> data = new HashMap<>();
@@ -415,6 +424,7 @@ public class UserController {
 
     /**
      * 批量设置状态-启用或者禁用
+     *
      * @param jsonObject
      * @param request
      * @return
@@ -422,12 +432,12 @@ public class UserController {
     @PostMapping(value = "/batchSetStatus")
     @ApiOperation(value = "批量设置状态")
     public String batchSetStatus(@RequestBody JSONObject jsonObject,
-                                 HttpServletRequest request)throws Exception {
+                                 HttpServletRequest request) throws Exception {
         Byte status = jsonObject.getByte("status");
         String ids = jsonObject.getString("ids");
         Map<String, Object> objectMap = new HashMap<>();
         int res = userService.batchSetStatus(status, ids, request);
-        if(res > 0) {
+        if (res > 0) {
             return returnJson(objectMap, ErpInfo.OK.name, ErpInfo.OK.code);
         } else {
             return returnJson(objectMap, ErpInfo.ERROR.name, ErpInfo.ERROR.code);
@@ -436,16 +446,17 @@ public class UserController {
 
     /**
      * 获取当前用户的用户数量和租户信息
+     *
      * @param request
      * @return
      */
     @GetMapping(value = "/infoWithTenant")
     @ApiOperation(value = "获取当前用户的用户数量和租户信息")
-    public BaseResponseInfo randomImage(HttpServletRequest request){
+    public BaseResponseInfo randomImage(HttpServletRequest request) {
         BaseResponseInfo res = new BaseResponseInfo();
         try {
             Map<String, Object> data = new HashMap<>();
-            Long userId = Long.parseLong(redisService.getObjectFromSessionByKey(request,"userId").toString());
+            Long userId = Long.parseLong(redisService.getObjectFromSessionByKey(request, "userId").toString());
             User user = userService.getUser(userId);
             //获取当前用户数
             int userCurrentNum = userService.getUser().size();

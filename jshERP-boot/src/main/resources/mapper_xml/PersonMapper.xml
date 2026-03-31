@@ -9,6 +9,7 @@
     <result column="sort" jdbcType="VARCHAR" property="sort" />
     <result column="tenant_id" jdbcType="BIGINT" property="tenantId" />
     <result column="delete_flag" jdbcType="VARCHAR" property="deleteFlag" />
+    <result column="divide_type" jdbcType="BIGINT" property="divideType" />
   </resultMap>
   <sql id="Example_Where_Clause">
     <where>
@@ -69,7 +70,7 @@
     </where>
   </sql>
   <sql id="Base_Column_List">
-    id, type, name, enabled, sort, tenant_id, delete_flag
+    id, type, name, enabled, sort, tenant_id, delete_flag,divide_type
   </sql>
   <select id="selectByExample" parameterType="com.jsh.erp.datasource.entities.PersonExample" resultMap="BaseResultMap">
     select
@@ -104,10 +105,10 @@
   <insert id="insert" parameterType="com.jsh.erp.datasource.entities.Person">
     insert into jsh_person (id, type, name, 
       enabled, sort, tenant_id, 
-      delete_flag)
+      delete_flag, divide_type)
     values (#{id,jdbcType=BIGINT}, #{type,jdbcType=VARCHAR}, #{name,jdbcType=VARCHAR}, 
       #{enabled,jdbcType=BIT}, #{sort,jdbcType=VARCHAR}, #{tenantId,jdbcType=BIGINT}, 
-      #{deleteFlag,jdbcType=VARCHAR})
+      #{deleteFlag,jdbcType=VARCHAR}, #{divideType,jdbcType=BIGINT})
   </insert>
   <insert id="insertSelective" parameterType="com.jsh.erp.datasource.entities.Person">
     insert into jsh_person
@@ -133,6 +134,9 @@
       <if test="deleteFlag != null">
         delete_flag,
       </if>
+      <if test="divideType != null">
+        divide_type,
+      </if>
     </trim>
     <trim prefix="values (" suffix=")" suffixOverrides=",">
       <if test="id != null">
@@ -155,6 +159,9 @@
       </if>
       <if test="deleteFlag != null">
         #{deleteFlag,jdbcType=VARCHAR},
+      </if>
+      <if test="divideType != null">
+        #{divideType,jdbcType=BIGINT},
       </if>
     </trim>
   </insert>
@@ -188,6 +195,9 @@
       <if test="record.deleteFlag != null">
         delete_flag = #{record.deleteFlag,jdbcType=VARCHAR},
       </if>
+      <if test="record.divideType != null">
+        divide_type = #{record.divideType,jdbcType=BIGINT},
+      </if>
     </set>
     <if test="_parameter != null">
       <include refid="Update_By_Example_Where_Clause" />
@@ -201,7 +211,8 @@
       enabled = #{record.enabled,jdbcType=BIT},
       sort = #{record.sort,jdbcType=VARCHAR},
       tenant_id = #{record.tenantId,jdbcType=BIGINT},
-      delete_flag = #{record.deleteFlag,jdbcType=VARCHAR}
+      delete_flag = #{record.deleteFlag,jdbcType=VARCHAR},
+      divide_type = #{record.divideType,jdbcType=BIGINT}
     <if test="_parameter != null">
       <include refid="Update_By_Example_Where_Clause" />
     </if>
@@ -227,6 +238,9 @@
       <if test="deleteFlag != null">
         delete_flag = #{deleteFlag,jdbcType=VARCHAR},
       </if>
+      <if test="divideType != null">
+        divide_type = #{divideType,jdbcType=BIGINT},
+      </if>
     </set>
     where id = #{id,jdbcType=BIGINT}
   </update>
@@ -237,7 +251,8 @@
       enabled = #{enabled,jdbcType=BIT},
       sort = #{sort,jdbcType=VARCHAR},
       tenant_id = #{tenantId,jdbcType=BIGINT},
-      delete_flag = #{deleteFlag,jdbcType=VARCHAR}
+      delete_flag = #{deleteFlag,jdbcType=VARCHAR},
+      divide_type = #{ivideType,jdbcType=BIGINT}
     where id = #{id,jdbcType=BIGINT}
   </update>
 </mapper>

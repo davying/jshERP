@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jsh.erp.datasource.mappers.custom.SampleManagementMapper">
+
+    <select id="getSampleInOutFinalList" resultType="com.jsh.erp.datasource.entitie.custom.SampleManagement">
+        SELECT
+        a.id,
+        a.commodity_no,
+        a.commodity_name,
+        IFNULL(a.color,'无') AS color,
+        a.size1-(SELECT IFNULL(sum(b.size1),0) from jsh_sample_management_log b WHERE a.id=b.sample_id and b.delete_flag=0) as size1 ,
+        a.size2-(SELECT IFNULL(sum(b.size2),0) from jsh_sample_management_log b WHERE a.id=b.sample_id and b.delete_flag=0) as size2 ,
+        a.size3-(SELECT IFNULL(sum(b.size3),0) from jsh_sample_management_log b WHERE a.id=b.sample_id and b.delete_flag=0) as size3 ,
+        a.size4-(SELECT IFNULL(sum(b.size4),0) from jsh_sample_management_log b WHERE a.id=b.sample_id and b.delete_flag=0) as size4 ,
+        a.size5-(SELECT IFNULL(sum(b.size5),0) from jsh_sample_management_log b WHERE a.id=b.sample_id and b.delete_flag=0) as size5 ,
+        a.size6-(SELECT IFNULL(sum(b.size6),0) from jsh_sample_management_log b WHERE a.id=b.sample_id and b.delete_flag=0) as size6 ,
+        a.size7-(SELECT IFNULL(sum(b.size7),0) from jsh_sample_management_log b WHERE a.id=b.sample_id and b.delete_flag=0) as size7 ,
+        a.size8-(SELECT IFNULL(sum(b.size8),0) from jsh_sample_management_log b WHERE a.id=b.sample_id and b.delete_flag=0) as size8 ,
+        a.size9-(SELECT IFNULL(sum(b.size9),0) from jsh_sample_management_log b WHERE a.id=b.sample_id and b.delete_flag=0)  as size9 ,
+        a.size10-(SELECT IFNULL(sum(b.size10),0) from jsh_sample_management_log b WHERE a.id=b.sample_id and b.delete_flag=0) as size10 ,
+        a.size11-(SELECT IFNULL(sum(b.size11),0) from jsh_sample_management_log b WHERE a.id=b.sample_id and b.delete_flag=0) as size11 ,
+        a.numbers-(SELECT IFNULL(sum(b.numbers),0) from jsh_sample_management_log b WHERE a.id=b.sample_id and b.delete_flag=0) as numbers,
+        a.in_time,
+        a.price,
+        a.remark
+        FROM jsh_sample_management a
+        WHERE
+        a.delete_flag=0
+        <!--       and date_format(a.create_time,'%Y')=date_format(now(),'%Y')
+               and (a.numbers is null or a.numbers-(SELECT IFNULL(sum(b.numbers),0) from jsh_sample_management_log b WHERE a.id=b.sample_id)!=0)-->
+        <if test="request.commodityNo !=null and request.commodityNo !=''">
+            AND a.commodity_no like concat('%',#{request.commodityNo},'%')
+        </if>
+        <if test="request.id !=null and request.id !=''">
+            AND a.id = #{request.id}
+        </if>
+        <if test="request.commodityName !=null and request.commodityName !=''">
+            AND a.commodity_name like concat('%',#{request.commodityName},'%')
+        </if>
+        <if test="request.color !=null and request.color !=''">
+            AND a.color = #{request.color}
+        </if>
+        <if test="request.inTimeStr !=null and request.inTimeStr !=''">
+            AND date_format(a.in_time,'%Y-%m-%d') = #{request.inTimeStr}
+        </if>
+        <if test="request.price !=null and request.price !=''">
+            AND a.price = #{request.price}
+        </if>
+    </select>
+
+    <select id="getSampleInOutFinalListNoPage" resultType="com.jsh.erp.datasource.entitie.custom.SampleManagement">
+        SELECT
+        a.id,
+        a.commodity_no,
+        a.commodity_name,
+        IFNULL(a.color,'无') AS color,
+        a.size1-(SELECT IFNULL(sum(b.size1),0) from jsh_sample_management_log b WHERE a.id=b.sample_id and b.delete_flag=0) as size1 ,
+        a.size2-(SELECT IFNULL(sum(b.size2),0) from jsh_sample_management_log b WHERE a.id=b.sample_id and b.delete_flag=0) as size2 ,
+        a.size3-(SELECT IFNULL(sum(b.size3),0) from jsh_sample_management_log b WHERE a.id=b.sample_id and b.delete_flag=0) as size3 ,
+        a.size4-(SELECT IFNULL(sum(b.size4),0) from jsh_sample_management_log b WHERE a.id=b.sample_id and b.delete_flag=0) as size4 ,
+        a.size5-(SELECT IFNULL(sum(b.size5),0) from jsh_sample_management_log b WHERE a.id=b.sample_id and b.delete_flag=0) as size5 ,
+        a.size6-(SELECT IFNULL(sum(b.size6),0) from jsh_sample_management_log b WHERE a.id=b.sample_id and b.delete_flag=0) as size6 ,
+        a.size7-(SELECT IFNULL(sum(b.size7),0) from jsh_sample_management_log b WHERE a.id=b.sample_id and b.delete_flag=0) as size7 ,
+        a.size8-(SELECT IFNULL(sum(b.size8),0) from jsh_sample_management_log b WHERE a.id=b.sample_id and b.delete_flag=0) as size8 ,
+        a.size9-(SELECT IFNULL(sum(b.size9),0) from jsh_sample_management_log b WHERE a.id=b.sample_id and b.delete_flag=0)  as size9 ,
+        a.size10-(SELECT IFNULL(sum(b.size10),0) from jsh_sample_management_log b WHERE a.id=b.sample_id and b.delete_flag=0) as size10 ,
+        a.size11-(SELECT IFNULL(sum(b.size11),0) from jsh_sample_management_log b WHERE a.id=b.sample_id and b.delete_flag=0) as size11 ,
+        a.numbers-(SELECT IFNULL(sum(b.numbers),0) from jsh_sample_management_log b WHERE a.id=b.sample_id and b.delete_flag=0) as numbers,
+        a.in_time,
+        a.price,
+        a.remark
+        FROM jsh_sample_management a
+        WHERE
+        a.delete_flag=0
+        <!--       and (a.numbers is null or a.numbers-(SELECT IFNULL(sum(b.numbers),0) from jsh_sample_management_log b WHERE a.id=b.sample_id)!=0)-->
+        <if test="request.commodityNo !=null and request.commodityNo !=''">
+            AND a.commodity_no like concat('%',#{request.commodityNo},'%')
+        </if>
+        <if test="request.id !=null and request.id !=''">
+            AND a.id = #{request.id}
+        </if>
+        <if test="request.commodityName !=null and request.commodityName !=''">
+            AND a.commodity_name like concat('%',#{request.commodityName},'%')
+        </if>
+        <if test="request.color !=null and request.color !=''">
+            AND a.color = #{request.color}
+        </if>
+        <if test="request.inTimeStr !=null and request.inTimeStr !=''">
+            AND date_format(a.in_time,'%Y-%m-%d') = #{request.inTimeStr}
+        </if>
+        <if test="request.price !=null and request.price !=''">
+            AND a.price = #{request.price}
+        </if>
+    </select>
+
+
+</mapper>

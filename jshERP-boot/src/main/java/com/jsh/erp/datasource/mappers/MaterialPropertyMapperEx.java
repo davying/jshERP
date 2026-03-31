@@ -1,7 +1,6 @@
 package com.jsh.erp.datasource.mappers;
 
 import com.jsh.erp.datasource.entities.MaterialProperty;
-import com.jsh.erp.datasource.entities.MaterialPropertyExample;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.Date;
@@ -15,6 +14,8 @@ public interface MaterialPropertyMapperEx {
             @Param("rows") Integer rows);
 
     Long countsByMaterialProperty(@Param("name") String name);
+
+    Long countsByMaterialProperty2(@Param("name") String name);
 
     int batchDeleteMaterialPropertyByIds(@Param("updateTime") Date updateTime, @Param("updater") Long updater, @Param("ids") String ids[]);
 }
