@@ -140,8 +140,14 @@ public class DepotHeadComponent implements ICommonQuery {
         query.eq(StrUtil.isNotBlank(status), DepotHead::getStatus, status);
         query.like(StrUtil.isNotBlank(customer), DepotHead::getCustomer, customer);
         query.eq(StrUtil.isNotBlank(depotId), DepotHead::getId, depotId);
-        query.ge(StrUtil.isNotBlank(beginTime), DepotHead::getOperTime, beginTime.concat(" 00:00:00"));
-        query.le(StrUtil.isNotBlank(endTime), DepotHead::getOperTime, endTime.concat(" 23:59:59"));
+        // 修改后
+        if (StrUtil.isNotBlank(beginTime)) {
+            query.ge(DepotHead::getOperTime, beginTime.concat(" 00:00:00"));
+        }
+        if (StrUtil.isNotBlank(endTime)) {
+            query.le(DepotHead::getOperTime, endTime.concat(" 23:59:59"));
+        }
+
         query.eq(StrUtil.isNotBlank(stackStaff), DepotHead::getStackStaff, stackStaff);
         query.eq(StrUtil.isNotBlank(rustStaff), DepotHead::getRustStaff, rustStaff);
         if (StrUtil.isNotBlank(operTime)) {
@@ -342,8 +348,12 @@ public class DepotHeadComponent implements ICommonQuery {
         query.eq(StrUtil.isNotBlank(status), DepotHead::getStatus, status);
         query.like(StrUtil.isNotBlank(customer), DepotHead::getCustomer, customer);
         query.eq(StrUtil.isNotBlank(depotId), DepotHead::getId, depotId);
-        query.ge(StrUtil.isNotBlank(beginTime), DepotHead::getOperTime, beginTime.concat(" 00:00:00"));
-        query.le(StrUtil.isNotBlank(endTime), DepotHead::getOperTime, endTime.concat(" 23:59:59"));
+        if (StrUtil.isNotBlank(beginTime)) {
+            query.ge(DepotHead::getOperTime, beginTime.concat(" 00:00:00"));
+        }
+        if (StrUtil.isNotBlank(endTime)) {
+            query.le(DepotHead::getOperTime, endTime.concat(" 23:59:59"));
+        }
         query.eq(StrUtil.isNotBlank(stackStaff), DepotHead::getStackStaff, stackStaff);
         query.eq(StrUtil.isNotBlank(rustStaff), DepotHead::getRustStaff, rustStaff);
         if (StrUtil.isNotBlank(operTime)) {
