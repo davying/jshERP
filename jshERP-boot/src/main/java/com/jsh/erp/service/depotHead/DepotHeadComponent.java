@@ -83,11 +83,8 @@ public class DepotHeadComponent implements ICommonQuery {
         String operTime = StringUtil.getInfo(search, "operTime");
         String isFinalPay = StringUtil.getInfo(search, "isFinalPay");
         String roleType = StringUtil.getInfo(search, "roleType");
-//        String hasDebt = StringUtil.getInfo(search, "hasDebt");
         String status = StringUtil.getInfo(search, "status");
-//        String purchaseStatus = StringUtil.getInfo(search, "purchaseStatus");
         String color = StringUtil.getInfo(search, "color");
-//        String linkNumber = StringUtil.getInfo(search, "linkNumber");
         String beginTime = StringUtil.getInfo(search, "beginTime");
         String endTime = StringUtil.getInfo(search, "endTime");
         String logisticsStatus = StringUtil.getInfo(search, "logisticsStatus");
@@ -102,8 +99,6 @@ public class DepotHeadComponent implements ICommonQuery {
         String printingReconciliationDate = StringUtil.getInfo(search, "printingReconciliationDate");
         String stampingReconciliationDate = StringUtil.getInfo(search, "stampingReconciliationDate");
         String embroideryReconciliationDate = StringUtil.getInfo(search, "embroideryReconciliationDate");
-
-//        String remark = StringUtil.getInfo(search, "remark");
         LambdaQueryWrapper<DepotHead> query = new LambdaQueryWrapper<>();
         String numbers = StringUtil.getInfo(search, "number");
         if (StrUtil.isNotBlank(numbers)) {
@@ -134,7 +129,6 @@ public class DepotHeadComponent implements ICommonQuery {
         query.eq(StrUtil.isNotBlank(type), DepotHead::getType, type);
         query.eq(StrUtil.isNotBlank(color), DepotHead::getColor, color);
         query.like(StrUtil.isNotBlank(commodityNo), DepotHead::getCommodityNo, commodityNo);
-//        query.eq(StrUtil.isNotBlank(number), DepotHead::getNumber, number);
         query.eq(StrUtil.isNotBlank(printer), DepotHead::getPrinter, printer);
         query.eq(StrUtil.isNotBlank(ironingStaff), DepotHead::getIroningStaff, ironingStaff);
         query.eq(StrUtil.isNotBlank(status), DepotHead::getStatus, status);
@@ -292,10 +286,7 @@ public class DepotHeadComponent implements ICommonQuery {
             return 0L;
         }
         List<String> userIds = users.stream().map(o -> StrUtil.toString(o.get("id"))).collect(Collectors.toList());
-
-//        String hasDebt = StringUtil.getInfo(search, "hasDebt");
         String status = StringUtil.getInfo(search, "status");
-//        String purchaseStatus = StringUtil.getInfo(search, "purchaseStatus");
         String color = StringUtil.getInfo(search, "color");
 //        String linkNumber = StringUtil.getInfo(search, "linkNumber");
         String beginTime = StringUtil.getInfo(search, "beginTime");
@@ -312,7 +303,6 @@ public class DepotHeadComponent implements ICommonQuery {
         String stampingReconciliationDate = StringUtil.getInfo(search, "stampingReconciliationDate");
         String embroideryReconciliationDate = StringUtil.getInfo(search, "embroideryReconciliationDate");
         String logisticsStatus = StringUtil.getInfo(search, "logisticsStatus");
-//        String remark = StringUtil.getInfo(search, "remark");
         LambdaQueryWrapper<DepotHead> query = new LambdaQueryWrapper<>();
         String numbers = StringUtil.getInfo(search, "number");
         if (StrUtil.isNotBlank(numbers)) {
@@ -369,24 +359,6 @@ public class DepotHeadComponent implements ICommonQuery {
             query.apply("date_format(embroidery_reconciliation_date,'%Y-%m-%d')='" + embroideryReconciliationDate + "'");
         }
         return depotHeadNewService.count(query);
-//        String type = StringUtil.getInfo(search, "type");
-//        String subType = StringUtil.getInfo(search, "subType");
-//        String roleType = StringUtil.getInfo(search, "roleType");
-//        String hasDebt = StringUtil.getInfo(search, "hasDebt");
-//        String status = StringUtil.getInfo(search, "status");
-//        String purchaseStatus = StringUtil.getInfo(search, "purchaseStatus");
-//        String number = StringUtil.getInfo(search, "number");
-//        String linkNumber = StringUtil.getInfo(search, "linkNumber");
-//        String beginTime = StringUtil.getInfo(search, "beginTime");
-//        String endTime = StringUtil.getInfo(search, "endTime");
-//        String materialParam = StringUtil.getInfo(search, "materialParam");
-//        Long organId = StringUtil.parseStrLong(StringUtil.getInfo(search, "organId"));
-//        Long creator = StringUtil.parseStrLong(StringUtil.getInfo(search, "creator"));
-//        Long depotId = StringUtil.parseStrLong(StringUtil.getInfo(search, "depotId"));
-//        Long accountId = StringUtil.parseStrLong(StringUtil.getInfo(search, "accountId"));
-//        String remark = StringUtil.getInfo(search, "remark");
-//        return depotHeadService.countDepotHead(type, subType, roleType, hasDebt, status, purchaseStatus, number, linkNumber,
-//                beginTime, endTime, materialParam, organId, creator, depotId, accountId, remark);
     }
 
     @Override
