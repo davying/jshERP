@@ -22,24 +22,24 @@
     <a-spin :spinning="confirmLoading">
       <a-form :form="form">
         <a-row class="form-row" :gutter="24">
-          <a-col :lg="6" :md="12" :sm="24">
-            <a-form-item :labelCol="labelCol" :wrapperCol="wrapperCol" label="客户" data-step="1" data-title="客户"
-              data-intro="客户必须选择，如果发现需要选择的客户尚未录入，可以在下拉框中点击新增客户进行录入。
-                          特别注意，客户如果录入之后在下拉框中不显示，请检查是否给当前用户分配对应的客户权限">
-              <a-select placeholder="选择客户" v-decorator="[ 'organId', validatorRules.organId ]"
-                :dropdownMatchSelectWidth="false" showSearch optionFilterProp="children" @change="handleOrganChange">
-                <div slot="dropdownRender" slot-scope="menu">
-                  <v-nodes :vnodes="menu" />
-                  <a-divider style="margin: 4px 0;" />
-                  <div v-if="isTenant" style="padding: 4px 8px; cursor: pointer;"
-                       @mousedown="e => e.preventDefault()" @click="addCustomer"><a-icon type="plus" /> 新增客户</div>
-                </div>
-                <a-select-option v-for="(item,index) in cusList" :key="index" :value="item.id">
-                  {{ item.supplier }}
-                </a-select-option>
-              </a-select>
-            </a-form-item>
-          </a-col>
+<!--          <a-col :lg="6" :md="12" :sm="24">-->
+<!--            <a-form-item :labelCol="labelCol" :wrapperCol="wrapperCol" label="客户" data-step="1" data-title="客户"-->
+<!--              data-intro="客户必须选择，如果发现需要选择的客户尚未录入，可以在下拉框中点击新增客户进行录入。-->
+<!--                          特别注意，客户如果录入之后在下拉框中不显示，请检查是否给当前用户分配对应的客户权限">-->
+<!--              <a-select placeholder="选择客户" v-decorator="[ 'organId', validatorRules.organId ]"-->
+<!--                :dropdownMatchSelectWidth="false" showSearch optionFilterProp="children" @change="handleOrganChange">-->
+<!--                <div slot="dropdownRender" slot-scope="menu">-->
+<!--                  <v-nodes :vnodes="menu" />-->
+<!--                  <a-divider style="margin: 4px 0;" />-->
+<!--                  <div v-if="isTenant" style="padding: 4px 8px; cursor: pointer;"-->
+<!--                       @mousedown="e => e.preventDefault()" @click="addCustomer"><a-icon type="plus" /> 新增客户</div>-->
+<!--                </div>-->
+<!--                <a-select-option v-for="(item,index) in cusList" :key="index" :value="item.id">-->
+<!--                  {{ item.supplier }}-->
+<!--                </a-select-option>-->
+<!--              </a-select>-->
+<!--            </a-form-item>-->
+<!--          </a-col>-->
           <a-col :lg="6" :md="12" :sm="24">
             <a-form-item :labelCol="labelCol" :wrapperCol="wrapperCol" label="单据日期">
               <j-date v-decorator="['operTime', validatorRules.operTime]" :show-time="true"/>
@@ -260,11 +260,11 @@
               { required: true, message: '请输入单据日期!' }
             ]
           },
-          organId:{
-            rules: [
-              { required: true, message: '请选择客户!' }
-            ]
-          }
+          // organId:{
+          //   rules: [
+          //     { required: true, message: '请选择客户!' }
+          //   ]
+          // }
         },
         url: {
           add: '/depotHead/addDepotHeadAndDetail',

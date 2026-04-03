@@ -59,30 +59,15 @@ public class DepotHeadComponent implements ICommonQuery {
         return getDepotHeadList(map);
     }
 
-    private List<?> getDepotHeadList(Map<String, String> map) throws Exception {
-        String search = map.get(Constants.SEARCH);
-        User userInfo = userService.getCurrentUser();
-        List<Map<String, String>> users = Lists.newArrayList();
-        String deptName = StringUtil.getInfo(search, "deptName");
-        if (StrUtil.equals(deptName, "全部") || StrUtil.isBlank(deptName)) {
-            users = userMapperEx.selectConditionUserList(null);
-        } else if (StrUtil.contains(deptName, "销售")) {
-            users = userMapperEx.selectConditionUserList(deptName);
-        } else if (StrUtil.equals(deptName, "财务仓储")) {
-            List<String> deptNames = Lists.newArrayList();
-            deptNames.add("仓库管理员");
-            deptNames.add("财务部");
-            users = userMapperEx.selectUserList(deptNames);
-        }
-        if (CollUtil.isEmpty(users)) {
-            return new ArrayList<DepotHead>();
-        }
-        List<String> userIds = users.stream().map(o -> StrUtil.toString(o.get("id"))).collect(Collectors.toList());
+    /**
+     * 抽取公共查询条件构建逻辑，供 getDepotHeadList 和 counts 共用
+     */
+    private LambdaQueryWrapper<DepotHead> buildQueryWrapper(String search, User userInfo, List<String> userIds) {
+        String roleType = StringUtil.getInfo(search, "roleType");
+        String isFinalPay = StringUtil.getInfo(search, "isFinalPay");
         String type = StringUtil.getInfo(search, "type");
         String salesMan = StringUtil.getInfo(search, "salesMan");
         String operTime = StringUtil.getInfo(search, "operTime");
-        String isFinalPay = StringUtil.getInfo(search, "isFinalPay");
-        String roleType = StringUtil.getInfo(search, "roleType");
         String status = StringUtil.getInfo(search, "status");
         String color = StringUtil.getInfo(search, "color");
         String beginTime = StringUtil.getInfo(search, "beginTime");
@@ -99,6 +84,7 @@ public class DepotHeadComponent implements ICommonQuery {
         String printingReconciliationDate = StringUtil.getInfo(search, "printingReconciliationDate");
         String stampingReconciliationDate = StringUtil.getInfo(search, "stampingReconciliationDate");
         String embroideryReconciliationDate = StringUtil.getInfo(search, "embroideryReconciliationDate");
+
         LambdaQueryWrapper<DepotHead> query = new LambdaQueryWrapper<>();
         String numbers = StringUtil.getInfo(search, "number");
         if (StrUtil.isNotBlank(numbers)) {
@@ -134,14 +120,12 @@ public class DepotHeadComponent implements ICommonQuery {
         query.eq(StrUtil.isNotBlank(status), DepotHead::getStatus, status);
         query.like(StrUtil.isNotBlank(customer), DepotHead::getCustomer, customer);
         query.eq(StrUtil.isNotBlank(depotId), DepotHead::getId, depotId);
-        // 修改后
         if (StrUtil.isNotBlank(beginTime)) {
             query.ge(DepotHead::getOperTime, beginTime.concat(" 00:00:00"));
         }
         if (StrUtil.isNotBlank(endTime)) {
             query.le(DepotHead::getOperTime, endTime.concat(" 23:59:59"));
         }
-
         query.eq(StrUtil.isNotBlank(stackStaff), DepotHead::getStackStaff, stackStaff);
         query.eq(StrUtil.isNotBlank(rustStaff), DepotHead::getRustStaff, rustStaff);
         if (StrUtil.isNotBlank(operTime)) {
@@ -156,6 +140,38 @@ public class DepotHeadComponent implements ICommonQuery {
         if (StrUtil.isNotBlank(embroideryReconciliationDate)) {
             query.apply("date_format(embroidery_reconciliation_date,'%Y-%m-%d')='" + embroideryReconciliationDate + "'");
         }
+        return query;
+    }
+
+    /**
+     * 抽取公共的部门用户列表查询逻辑
+     */
+    private List<Map<String, String>> getUsersByDeptName(String search) {
+        String deptName = StringUtil.getInfo(search, "deptName");
+        if (StrUtil.equals(deptName, "全部") || StrUtil.isBlank(deptName)) {
+            return userMapperEx.selectConditionUserList(null);
+        } else if (StrUtil.contains(deptName, "销售")) {
+            return userMapperEx.selectConditionUserList(deptName);
+        } else if (StrUtil.equals(deptName, "财务仓储")) {
+            List<String> deptNames = Lists.newArrayList();
+            deptNames.add("仓库管理员");
+            deptNames.add("财务部");
+            return userMapperEx.selectUserList(deptNames);
+        }
+        return Lists.newArrayList();
+    }
+
+    private List<?> getDepotHeadList(Map<String, String> map) throws Exception {
+        String search = map.get(Constants.SEARCH);
+        User userInfo = userService.getCurrentUser();
+        List<Map<String, String>> users = getUsersByDeptName(search);
+        if (CollUtil.isEmpty(users)) {
+            return new ArrayList<DepotHead>();
+        }
+        List<String> userIds = users.stream().map(o -> StrUtil.toString(o.get("id"))).collect(Collectors.toList());
+        String roleType = StringUtil.getInfo(search, "roleType");
+
+        LambdaQueryWrapper<DepotHead> query = buildQueryWrapper(search, userInfo, userIds);
         if (StrUtil.contains(userInfo.getRoleName(), "业务员") || StrUtil.contains(roleType, "个人")) {
             query.orderByDesc(DepotHead::getOperTime);
         } else {
@@ -264,100 +280,12 @@ public class DepotHeadComponent implements ICommonQuery {
     public Long counts(Map<String, String> map) throws Exception {
         String search = map.get(Constants.SEARCH);
         User userInfo = userService.getCurrentUser();
-        String isFinalPay = StringUtil.getInfo(search, "isFinalPay");
-        String type = StringUtil.getInfo(search, "type");
-        String salesMan = StringUtil.getInfo(search, "salesMan");
-        String operTime = StringUtil.getInfo(search, "operTime");
-        String roleType = StringUtil.getInfo(search, "roleType");
-
-        List<Map<String, String>> users = Lists.newArrayList();
-        String deptName = StringUtil.getInfo(search, "deptName");
-        if (StrUtil.equals(deptName, "全部") || StrUtil.isBlank(deptName)) {
-            users = userMapperEx.selectConditionUserList(null);
-        } else if (StrUtil.contains(deptName, "销售")) {
-            users = userMapperEx.selectConditionUserList(deptName);
-        } else if (StrUtil.equals(deptName, "财务仓储")) {
-            List<String> deptNames = Lists.newArrayList();
-            deptNames.add("仓库管理员");
-            deptNames.add("财务部");
-            users = userMapperEx.selectUserList(deptNames);
-        }
+        List<Map<String, String>> users = getUsersByDeptName(search);
         if (CollUtil.isEmpty(users)) {
             return 0L;
         }
         List<String> userIds = users.stream().map(o -> StrUtil.toString(o.get("id"))).collect(Collectors.toList());
-        String status = StringUtil.getInfo(search, "status");
-        String color = StringUtil.getInfo(search, "color");
-//        String linkNumber = StringUtil.getInfo(search, "linkNumber");
-        String beginTime = StringUtil.getInfo(search, "beginTime");
-        String endTime = StringUtil.getInfo(search, "endTime");
-        String commodityNo = StringUtil.getInfo(search, "commodityNo");
-        String customer = StringUtil.getInfo(search, "customer");
-        String depotId = StringUtil.getInfo(search, "depotId");
-        String creator = StringUtil.getInfo(search, "creator");
-        String printer = StringUtil.getInfo(search, "printer");
-        String ironingStaff = StringUtil.getInfo(search, "ironingStaff");
-        String stackStaff = StringUtil.getInfo(search, "stackStaff");
-        String rustStaff = StringUtil.getInfo(search, "rustStaff");
-        String printingReconciliationDate = StringUtil.getInfo(search, "printingReconciliationDate");
-        String stampingReconciliationDate = StringUtil.getInfo(search, "stampingReconciliationDate");
-        String embroideryReconciliationDate = StringUtil.getInfo(search, "embroideryReconciliationDate");
-        String logisticsStatus = StringUtil.getInfo(search, "logisticsStatus");
-        LambdaQueryWrapper<DepotHead> query = new LambdaQueryWrapper<>();
-        String numbers = StringUtil.getInfo(search, "number");
-        if (StrUtil.isNotBlank(numbers)) {
-            List<String> numberList = Splitter.on("，").trimResults().splitToList(numbers.replaceAll(",", "，"));
-            query.in(DepotHead::getNumber, numberList);
-        }
-        query.eq(DepotHead::getDeleteFlag, 0);
-        query.eq(StrUtil.isNotBlank(logisticsStatus), DepotHead::getLogisticsStatus, logisticsStatus);
-        if (StrUtil.equals(isFinalPay, "是")) {
-            query.apply("IFNULL(end_staff,'')='是'");
-        } else if (StrUtil.equals(isFinalPay, "否")) {
-            query.apply("IFNULL(end_staff,'')!='是'");
-        }
-        if (CollUtil.isNotEmpty(userIds)) {
-            query.in(DepotHead::getCreator, userIds);
-        }
-        if (StrUtil.contains(userInfo.getRoleName(), "业务员") || StrUtil.contains(roleType, "个人")) {
-            query.eq(DepotHead::getCreator, userInfo.getId());
-        } else if (StrUtil.contains(userInfo.getRoleName(), "财务")) {
-            query.isNotNull(DepotHead::getNumber);
-        } else if (StrUtil.contains(userInfo.getRoleName(), "仓库")) {
-            query.in(DepotHead::getStatus, 9, 4, 1);
-            query.notLike(DepotHead::getNumber, "D");
-        } else {
-            query.eq(StrUtil.isNotBlank(creator), DepotHead::getCreator, creator);
-        }
-        query.eq(StrUtil.isNotBlank(salesMan), DepotHead::getSalesMan, salesMan);
-        query.eq(StrUtil.isNotBlank(type), DepotHead::getType, type);
-        query.eq(StrUtil.isNotBlank(color), DepotHead::getColor, color);
-        query.like(StrUtil.isNotBlank(commodityNo), DepotHead::getCommodityNo, commodityNo);
-        query.eq(StrUtil.isNotBlank(printer), DepotHead::getPrinter, printer);
-        query.eq(StrUtil.isNotBlank(ironingStaff), DepotHead::getIroningStaff, ironingStaff);
-        query.eq(StrUtil.isNotBlank(status), DepotHead::getStatus, status);
-        query.like(StrUtil.isNotBlank(customer), DepotHead::getCustomer, customer);
-        query.eq(StrUtil.isNotBlank(depotId), DepotHead::getId, depotId);
-        if (StrUtil.isNotBlank(beginTime)) {
-            query.ge(DepotHead::getOperTime, beginTime.concat(" 00:00:00"));
-        }
-        if (StrUtil.isNotBlank(endTime)) {
-            query.le(DepotHead::getOperTime, endTime.concat(" 23:59:59"));
-        }
-        query.eq(StrUtil.isNotBlank(stackStaff), DepotHead::getStackStaff, stackStaff);
-        query.eq(StrUtil.isNotBlank(rustStaff), DepotHead::getRustStaff, rustStaff);
-        if (StrUtil.isNotBlank(operTime)) {
-            query.apply("date_format(oper_time,'%Y-%m-%d')='" + operTime + "'");
-        }
-        if (StrUtil.isNotBlank(printingReconciliationDate)) {
-            query.apply("date_format(printing_reconciliation_date,'%Y-%m-%d')='" + printingReconciliationDate + "'");
-        }
-        if (StrUtil.isNotBlank(stampingReconciliationDate)) {
-            query.apply("date_format(stamping_reconciliation_date,'%Y-%m-%d')='" + stampingReconciliationDate + "'");
-        }
-        if (StrUtil.isNotBlank(embroideryReconciliationDate)) {
-            query.apply("date_format(embroidery_reconciliation_date,'%Y-%m-%d')='" + embroideryReconciliationDate + "'");
-        }
+        LambdaQueryWrapper<DepotHead> query = buildQueryWrapper(search, userInfo, userIds);
         return depotHeadNewService.count(query);
     }
 

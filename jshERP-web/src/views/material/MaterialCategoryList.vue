@@ -95,7 +95,7 @@
   </a-row>
 </template>
 <script>
-import MaterialCategoryModal from '../material/modules/MaterialCategoryModal'
+import MaterialCategoryModal from './modules/MaterialCategoryModal'
 import pick from 'lodash.pick'
 import {queryMaterialCategoryTreeList,queryMaterialCategoryById,checkMaterialCategory} from '@/api/api'
 import {httpAction, deleteAction} from '@/api/manage'

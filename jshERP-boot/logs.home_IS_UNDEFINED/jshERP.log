@@ -1,0 +1,3 @@
+2026/04/03-07:49:22 INFO  [main] com.jsh.erp.ErpApplication - Starting ErpApplication on zhangdaweidebijibendiannao-3.local with PID 17354 (/Users/zhangdawei/ideaProjects/zhangsudan/jshERP/jshERP-boot/target/classes started by zhangdawei in /Users/zhangdawei/ideaProjects/zhangsudan/jshERP/jshERP-boot)
+2026/04/03-07:49:22 INFO  [main] com.jsh.erp.ErpApplication - The following profiles are active: dev
+2026/04/03-07:49:33 INFO  [main] com.jsh.erp.ErpApplication - Started ErpApplication in 12.161 seconds (JVM running for 13.379)

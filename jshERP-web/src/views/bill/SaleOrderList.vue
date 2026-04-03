@@ -41,15 +41,15 @@
                 </a-col>
               </span>
               <template v-if="toggleSearchStatus">
-                <a-col :md="6" :sm="24">
-                  <a-form-item label="客户" :labelCol="labelCol" :wrapperCol="wrapperCol">
-                    <a-select placeholder="选择客户" showSearch optionFilterProp="children" v-model="queryParam.organId">
-                      <a-select-option v-for="(item,index) in cusList" :key="index" :value="item.id">
-                        {{ item.supplier }}
-                      </a-select-option>
-                    </a-select>
-                  </a-form-item>
-                </a-col>
+<!--                <a-col :md="6" :sm="24">-->
+<!--                  <a-form-item label="客户" :labelCol="labelCol" :wrapperCol="wrapperCol">-->
+<!--                    <a-select placeholder="选择客户" showSearch optionFilterProp="children" v-model="queryParam.organId">-->
+<!--                      <a-select-option v-for="(item,index) in cusList" :key="index" :value="item.id">-->
+<!--                        {{ item.supplier }}-->
+<!--                      </a-select-option>-->
+<!--                    </a-select>-->
+<!--                  </a-form-item>-->
+<!--                </a-col>-->
                 <a-col :md="6" :sm="24">
                   <a-form-item label="操作员" :labelCol="labelCol" :wrapperCol="wrapperCol">
                     <a-select placeholder="选择操作员" showSearch optionFilterProp="children" v-model="queryParam.creator">
@@ -191,7 +191,7 @@
             align:"center", width: 150,
             scopedSlots: { customRender: 'action' },
           },
-          { title: '客户', dataIndex: 'organName',width:120, ellipsis:true},
+          // { title: '客户', dataIndex: 'organName',width:120, ellipsis:true},
           { title: '单据编号', dataIndex: 'number',width:120},
           { title: '商品信息', dataIndex: 'materialsList',width:220, ellipsis:true,
             customRender:function (text,record,index) {

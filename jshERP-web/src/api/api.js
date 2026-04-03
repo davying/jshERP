@@ -47,6 +47,9 @@ const editMaterialProperty = (params)=>putAction("/materialProperty/update",para
 const queryMaterialCategoryTreeList = (params)=>getAction("/materialCategory/getMaterialCategoryTree",params);
 const queryMaterialCategoryById = (params)=>getAction("/materialCategory/findById",params);
 const checkMaterialCategory = (params)=>getAction("/materialCategory/checkIsNameExist",params);
+//货品管理
+
+// const checkCommodity = (params)=>getAction("/commodity/checkIsExist",params);
 //商品管理
 const addMaterial = (params)=>postAction("/material/add",params);
 const editMaterial = (params)=>putAction("/material/update",params);

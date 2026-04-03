@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jsh.erp.datasource.mappers.custom.WarehouseManagementMapper">
+
+    <select id="getInOutFinalList" resultType="com.jsh.erp.datasource.entitie.custom.WarehouseManagement">
+        SELECT
+        a.commodity_no,
+        a.commodity_name,
+        a.color,
+        COALESCE(a.size1, 0) - COALESCE(b.size1, 0) - COALESCE(c.size1, 0) AS size1,
+        COALESCE(a.size2, 0) - COALESCE(b.size2, 0) - COALESCE(c.size2, 0) AS size2,
+        COALESCE(a.size3, 0) - COALESCE(b.size3, 0) - COALESCE(c.size3, 0) AS size3,
+        COALESCE(a.size4, 0) - COALESCE(b.size4, 0) - COALESCE(c.size4, 0) AS size4,
+        COALESCE(a.size5, 0) - COALESCE(b.size5, 0) - COALESCE(c.size5, 0) AS size5,
+        COALESCE(a.size6, 0) - COALESCE(b.size6, 0) - COALESCE(c.size6, 0) AS size6,
+        COALESCE(a.size7, 0) - COALESCE(b.size7, 0) - COALESCE(c.size7, 0) AS size7,
+        COALESCE(a.size8, 0) - COALESCE(b.size8, 0) - COALESCE(c.size8, 0) AS size8,
+        COALESCE(a.size9, 0) - COALESCE(b.size9, 0) - COALESCE(c.size9, 0) AS size9,
+        COALESCE(a.size10, 0) - COALESCE(b.size10, 0) - COALESCE(c.size10, 0) AS size10,
+        COALESCE(a.size11, 0) - COALESCE(b.size11, 0) - COALESCE(c.size11, 0) AS size11,
+        COALESCE(a.numbers, 0) - COALESCE(b.numbers, 0) - COALESCE(c.numbers, 0) AS numbers
+        FROM (
+        SELECT
+        commodity_no,
+        ANY_VALUE(commodity_name) AS commodity_name,
+        color,
+        SUM(size1) AS size1,
+        SUM(size2) AS size2,
+        SUM(size3) AS size3,
+        SUM(size4) AS size4,
+        SUM(size5) AS size5,
+        SUM(size6) AS size6,
+        SUM(size7) AS size7,
+        SUM(size8) AS size8,
+        SUM(size9) AS size9,
+        SUM(size10) AS size10,
+        SUM(size11) AS size11,
+        SUM(numbers) AS numbers
+        FROM jsh_warehouse_management
+        WHERE delete_flag = 0 AND type = '入库'
+        GROUP BY commodity_no, color
+        ) a
+        LEFT JOIN (
+        SELECT
+        commodity_no,
+        color,
+        SUM(size1) AS size1,
+        SUM(size2) AS size2,
+        SUM(size3) AS size3,
+        SUM(size4) AS size4,
+        SUM(size5) AS size5,
+        SUM(size6) AS size6,
+        SUM(size7) AS size7,
+        SUM(size8) AS size8,
+        SUM(size9) AS size9,
+        SUM(size10) AS size10,
+        SUM(size11) AS size11,
+        SUM(numbers) AS numbers
+        FROM jsh_depot_head
+        WHERE sale_type = '自有仓库' and create_time>='2026-02-03 00:00:00'
+        AND delete_flag = 0
+        AND number IS NOT NULL AND number != ''
+        GROUP BY commodity_no, color
+        ) b ON a.commodity_no = b.commodity_no AND a.color = b.color
+        LEFT JOIN (
+        SELECT
+        commodity_no,
+        color,
+        SUM(size1) AS size1,
+        SUM(size2) AS size2,
+        SUM(size3) AS size3,
+        SUM(size4) AS size4,
+        SUM(size5) AS size5,
+        SUM(size6) AS size6,
+        SUM(size7) AS size7,
+        SUM(size8) AS size8,
+        SUM(size9) AS size9,
+        SUM(size10) AS size10,
+        SUM(size11) AS size11,
+        SUM(numbers) AS numbers
+        FROM jsh_sample_management
+        WHERE delete_flag = 0
+        GROUP BY commodity_no, color
+        ) c ON a.commodity_no = c.commodity_no AND a.color = c.color
+        where 1=1
+        <if test="request.commodityNo !=null and request.commodityNo !=''">
+            AND a.commodity_no =#{request.commodityNo}
+        </if>
+        <if test="request.commodityName !=null and request.commodityName !=''">
+            AND a.commodity_name = #{request.commodityName}
+        </if>
+        <if test="request.color !=null and request.color !=''">
+            AND a.color like concat(#{request.color} ,'%')
+        </if>
+        <if test="request.inTimeStr !=null and request.inTimeStr !=''">
+            AND date_format(a.in_time,'%Y-%m-%d') = #{request.inTimeStr}
+        </if>
+    </select>
+
+    <select id="getInOutFinalList2" resultType="com.jsh.erp.datasource.entitie.custom.WarehouseManagement">
+        SELECT
+        a.commodity_no as commodityNo,
+        a.commodity_name as commodityName,
+        a.color,
+        case when a.size1=0 then -9999 else COALESCE(a.size1, 0) - COALESCE(b.size1, 0) - COALESCE(c.size1, 0) end AS size1,
+        case when a.size2=0 then -9999 else COALESCE(a.size2, 0) - COALESCE(b.size2, 0) - COALESCE(c.size2, 0) end AS size2,
+        case when a.size3=0 then -9999 else COALESCE(a.size3, 0) - COALESCE(b.size3, 0) - COALESCE(c.size3, 0) end AS size3,
+        case when a.size4=0 then -9999 else COALESCE(a.size4, 0) - COALESCE(b.size4, 0) - COALESCE(c.size4, 0) end AS size4,
+        case when a.size5=0 then -9999 else COALESCE(a.size5, 0) - COALESCE(b.size5, 0) - COALESCE(c.size5, 0) end AS size5,
+        case when a.size6=0 then -9999 else COALESCE(a.size6, 0) - COALESCE(b.size6, 0) - COALESCE(c.size6, 0) end AS size6,
+        case when a.size7=0 then -9999 else COALESCE(a.size7, 0) - COALESCE(b.size7, 0) - COALESCE(c.size7, 0) end AS size7,
+        case when a.size8=0 then -9999 else COALESCE(a.size8, 0) - COALESCE(b.size8, 0) - COALESCE(c.size8, 0) end AS size8,
+        case when a.size9=0 then -9999 else COALESCE(a.size9, 0) - COALESCE(b.size9, 0) - COALESCE(c.size9, 0) end AS size9,
+        case when a.size10=0 then -9999 else COALESCE(a.size10, 0) - COALESCE(b.size10, 0) - COALESCE(c.size10, 0) end AS size10,
+        case when a.size11=0 then -9999 else COALESCE(a.size11, 0) - COALESCE(b.size11, 0) - COALESCE(c.size11, 0) end AS size11
+        FROM (SELECT
+        commodity_no,
+        ANY_VALUE(commodity_name) AS commodity_name,
+        color,
+        SUM(size1) AS size1,
+        SUM(size2) AS size2,
+        SUM(size3) AS size3,
+        SUM(size4) AS size4,
+        SUM(size5) AS size5,
+        SUM(size6) AS size6,
+        SUM(size7) AS size7,
+        SUM(size8) AS size8,
+        SUM(size9) AS size9,
+        SUM(size10) AS size10,
+        SUM(size11) AS size11,
+        SUM(numbers) AS numbers
+        FROM jsh_warehouse_management
+        WHERE delete_flag = 0 AND type = '入库' and remark in ('年底盘库后重新入库','2X 有59件色差没有录进去')
+        GROUP BY commodity_no, color
+        ) a
+        LEFT JOIN (
+        SELECT
+        commodity_no,
+        color,
+        SUM(size1) AS size1,
+        SUM(size2) AS size2,
+        SUM(size3) AS size3,
+        SUM(size4) AS size4,
+        SUM(size5) AS size5,
+        SUM(size6) AS size6,
+        SUM(size7) AS size7,
+        SUM(size8) AS size8,
+        SUM(size9) AS size9,
+        SUM(size10) AS size10,
+        SUM(size11) AS size11,
+        SUM(numbers) AS numbers
+        FROM jsh_depot_head
+        WHERE sale_type = '自有仓库' and create_time>='2026-02-03 00:00:00'
+        AND delete_flag = 0
+        AND number IS NOT NULL AND number != ''
+        GROUP BY commodity_no, color
+        ) b ON a.commodity_no = b.commodity_no AND a.color = b.color
+        LEFT JOIN (
+        SELECT
+        commodity_no,
+        color,
+        SUM(size1) AS size1,
+        SUM(size2) AS size2,
+        SUM(size3) AS size3,
+        SUM(size4) AS size4,
+        SUM(size5) AS size5,
+        SUM(size6) AS size6,
+        SUM(size7) AS size7,
+        SUM(size8) AS size8,
+        SUM(size9) AS size9,
+        SUM(size10) AS size10,
+        SUM(size11) AS size11,
+        SUM(numbers) AS numbers
+        FROM jsh_sample_management
+        WHERE delete_flag = 0
+        GROUP BY commodity_no, color
+        ) c ON a.commodity_no = c.commodity_no AND a.color = c.color
+        where 1=1
+        <if test="request.commodityNo !=null and request.commodityNo !=''">
+            AND a.commodity_no =#{request.commodityNo}
+        </if>
+        <if test="request.commodityName !=null and request.commodityName !=''">
+            AND a.commodity_name = #{request.commodityName}
+        </if>
+        <if test="request.color !=null and request.color !=''">
+            AND a.color like concat(#{request.color} ,'%')
+        </if>
+        <if test="request.inTimeStr !=null and request.inTimeStr !=''">
+            AND date_format(a.in_time,'%Y-%m-%d') = #{request.inTimeStr}
+        </if>
+    </select>
+
+    <select id="getCommodityNoColors" resultType="java.util.Map">
+        SELECT
+            any_value(a.color) as nativeName
+        FROM jsh_warehouse_management a
+        WHERE
+            a.delete_flag=0
+          AND a.type ='入库'
+          AND a.commodity_no= #{commodityNo}
+        GROUP BY a.color
+    </select>
+
+</mapper>

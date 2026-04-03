@@ -1,0 +1,4 @@
+2026/04/01-11:22:50 INFO  [main] com.jsh.erp.ErpApplication - Starting ErpApplication on zhangdadiannao3 with PID 2202 (/Users/zhangdawei/ideaProjects/zhangsudan/jshERP/jshERP-boot/target/classes started by zhangdawei in /Users/zhangdawei/ideaProjects/zhangsudan/jshERP/jshERP-boot)
+2026/04/01-11:22:50 INFO  [main] com.jsh.erp.ErpApplication - The following profiles are active: dev
+2026/04/01-11:23:02 INFO  [main] com.jsh.erp.ErpApplication - Started ErpApplication in 13.458 seconds (JVM running for 14.908)
+2026/04/01-13:48:30 WARN  [SpringContextShutdownHook] org.springframework.beans.factory.support.DisposableBeanAdapter - Destroy method 'shutdown' on bean with name 'webAppContext' threw an exception: java.lang.IllegalStateException: the container is not started yet.
