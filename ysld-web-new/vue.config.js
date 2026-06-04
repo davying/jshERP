@@ -12,13 +12,20 @@ module.exports = {
     
     // 添加时间戳到文件名，避免缓存问题
     configureWebpack: config => {
+        config.resolve = config.resolve || {}
+        config.resolve.fallback = Object.assign({}, config.resolve.fallback, {
+            timers: require.resolve('timers-browserify')
+        })
         // 生产环境取消 console.log
         if (process.env.NODE_ENV === 'production') {
-            config.optimization.minimizer[0].options.terserOptions.compress.drop_console = true
+            const minimizer = config.optimization && Array.isArray(config.optimization.minimizer)
+                ? config.optimization.minimizer[0]
+                : null
+            if (minimizer && minimizer.options && minimizer.options.terserOptions && minimizer.options.terserOptions.compress) {
+                minimizer.options.terserOptions.compress.drop_console = true
+            }
             
-            // 添加时间戳到输出文件名
-            config.output.filename = `js/[name].[contenthash:8].${Date.now()}.js`
-            config.output.chunkFilename = `js/[name].[contenthash:8].${Date.now()}.js`
+            // webpack5 下保持默认产物命名，更利于部署和缓存稳定
         }
     },
     chainWebpack: (config) => {
@@ -30,23 +37,25 @@ module.exports = {
             .set('@views', resolve('src/views'))
         // 生产环境，开启js\css压缩
         if (process.env.NODE_ENV === 'production') {
-            config.plugin('compressionPlugin').use(new CompressionPlugin({
+            config.plugin('compressionPlugin').use(CompressionPlugin, [{
                 test: /\.(js|css|less)$/, // 匹配文件名
                 threshold: 10240, // 对超过10k的数据压缩
                 deleteOriginalAssets: false // 删除源文件
-            }))
+            }])
         }
     },
     css: {
         loaderOptions: {
             less: {
-                modifyVars: {
-                    /* less 变量覆盖，用于自定义 ant design 主题 */
-                    'primary-color': '#1890FF',
-                    'link-color': '#1890FF',
-                    'border-radius-base': '4px'
+                lessOptions: {
+                    modifyVars: {
+                        /* less 变量覆盖，用于自定义 ant design 主题 */
+                        'primary-color': '#1890FF',
+                        'link-color': '#1890FF',
+                        'border-radius-base': '4px'
+                    },
+                    javascriptEnabled: true
                 },
-                javascriptEnabled: true
             }
         }
     },
@@ -54,12 +63,12 @@ module.exports = {
         port: 3000,
         proxy: {
             '/jshERP-boot': {
-                target: 'http://localhost:9999', // 请求本地 需要jshERP-boot后台项目
-                // target: 'http://47.97.208.42:4471',
+                // target: 'http://localhost:9999', // 请求本地 需要jshERP-boot后台项目
+                target: 'http://47.97.208.42:4471',
                 ws: false,
                 changeOrigin: true
             }
         }
     },
-    lintOnSave: undefined
+    lintOnSave: false
 }

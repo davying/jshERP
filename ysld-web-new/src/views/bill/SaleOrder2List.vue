@@ -216,9 +216,25 @@
               批量操作 <a-icon type="down" />
             </a-button>
           </a-dropdown>
-          <a-button type="primary" @click="retailExportExcel()">导出订单明细</a-button>
-          <a-button type="primary" @click="commodityExportExcel()">导出货品信息汇总</a-button>
-          <a-button type="primary" @click="salesManExportExcel()">导出业务员汇总</a-button>
+          <a-button
+            type="primary"
+            :loading="exportLoading.retail"
+            :disabled="isAnyExportLoading && !exportLoading.retail"
+            @click="retailExportExcel()"
+          >{{ exportLoading.retail ? '导出中...' : '导出订单明细' }}</a-button>
+          <a-button
+            type="primary"
+            :loading="exportLoading.commodity"
+            :disabled="isAnyExportLoading && !exportLoading.commodity"
+            @click="commodityExportExcel()"
+          >{{ exportLoading.commodity ? '导出中...' : '导出货品信息汇总' }}</a-button>
+          <a-button
+            type="primary"
+            :loading="exportLoading.salesMan"
+            :disabled="isAnyExportLoading && !exportLoading.salesMan"
+            @click="salesManExportExcel()"
+          >{{ exportLoading.salesMan ? '导出中...' : '导出业务员汇总' }}</a-button>
+          <a-tag v-if="isAnyExportLoading" color="processing" style="margin-left: 8px;">正在导出，请勿重复点击</a-tag>
           <!--          <a-tooltip placement="left" title="销售订单不涉及收款金额，销售订单可以转销售出库单，但需要先对销售订单进行审核。-->
 <!--          勾选单据之后可以进行批量操作（删除、审核、反审核）" slot="action">-->
 <!--            <a-icon v-if="btnEnableList.indexOf(1)>-1" type="question-circle" style="font-size:20px;float:right;" />-->
@@ -361,6 +377,11 @@
         },
         // 添加一个 key 用于强制刷新表格
         tableKey: Date.now(),
+        exportLoading: {
+          retail: false,
+          commodity: false,
+          salesMan: false
+        },
         // 表头
         columns: [
           {
@@ -479,6 +500,9 @@
     mount:{
     },
     computed: {
+      isAnyExportLoading() {
+        return this.exportLoading.retail || this.exportLoading.commodity || this.exportLoading.salesMan
+      }
     },
     methods: {
       focus() {},
@@ -496,91 +520,82 @@
           }
         });
       },
+      triggerExport(url, param, fileName, exportType) {
+        if (this.exportLoading[exportType]) {
+          return Promise.resolve()
+        }
+        this.$set(this.exportLoading, exportType, true)
+        return downFile(url, param).then(res => {
+          const blobUrl = window.URL.createObjectURL(new Blob([res], { type: 'application/vnd.ms-excel' }))
+          const link = document.createElement('a')
+          link.href = blobUrl
+          link.style.display = 'none'
+          link.setAttribute('download', fileName)
+          document.body.appendChild(link)
+          link.click()
+          document.body.removeChild(link)
+          window.URL.revokeObjectURL(blobUrl)
+        }).finally(() => {
+          this.$set(this.exportLoading, exportType, false)
+        })
+      },
       retailExportExcel() {
-        let param ={}
-        param=this.queryParam
+        if (this.isAnyExportLoading) {
+          return
+        }
+        const param = { ...this.queryParam }
         if (this.selectedRowKeys.length <= 0) {
-          // this.$message.warning('请选择一条记录！');
-          downFile(this.url.exportXlsUrl, param).then(res => {
-            const url = window.URL.createObjectURL(new Blob([res],{type: 'application/vnd.ms-excel'}));
-            const link = document.createElement('a');
-            link.href = url;
-            // link.download = '销售订单-' + formatDate+ '.xls';
-            link.style.display = 'none'
-            link.setAttribute('download',  '销售订单_'+getNowFormatStr()+'.xls')
-            document.body.appendChild(link)
-            link.click()
-            document.body.removeChild(link); //下载完成移除元素
-            window.URL.revokeObjectURL(url); //释放掉blob对象
-          })
-          return;
+          return this.triggerExport(
+            this.url.exportXlsUrl,
+            param,
+            '销售订单_' + getNowFormatStr() + '.xls',
+            'retail'
+          )
         } else {
           var ids = "";
           for (var a = 0; a < this.selectedRowKeys.length; a++) {
             ids += this.selectedRowKeys[a] + ",";
           }
-          var that = this;
           this.$confirm({
             title: "确认导出",
             content: "是否导出选中数据?",
-            onOk: function () {
-              that.loading = true;
-              that.$set(param, 'ids',ids)
-              downFile(that.url.exportXlsUrl, param).then(res => {
-                const url = window.URL.createObjectURL(new Blob([res],{type: 'application/vnd.ms-excel'}));
-                const link = document.createElement('a');
-                link.href = url;
-                // link.download = '销售订单-' + formatDate+ '.xls';
-                link.style.display = 'none'
-                link.setAttribute('download',  '销售订单_'+getNowFormatStr()+'.xls')
-                document.body.appendChild(link)
-                link.click()
-                document.body.removeChild(link); //下载完成移除元素
-                window.URL.revokeObjectURL(url); //释放掉blob对象
-              })
-              that.loading = false;
+            onOk: () => {
+              const exportParam = { ...param, ids }
+              return this.triggerExport(
+                this.url.exportXlsUrl,
+                exportParam,
+                '销售订单_' + getNowFormatStr() + '.xls',
+                'retail'
+              )
             }
-          });
+          })
         }
 
 
       },
       commodityExportExcel() {
-        let param ={}
-        param=this.queryParam
-          // this.$message.warning('请选择一条记录！');
-        downFile(this.url.exportCommodityList, param).then(res => {
-          const url = window.URL.createObjectURL(new Blob([res],{type: 'application/vnd.ms-excel'}));
-            // const url = window.URL.createObjectURL(new Blob([res],{type: 'application/vnd.ms-excel'}));
-            const link = document.createElement('a');
-            link.href = url;
-            // link.download = '销售订单-' + formatDate+ '.xls';
-            link.style.display = 'none'
-            link.setAttribute('download',  '货品信息汇总_'+getNowFormatStr()+'.xls')
-            document.body.appendChild(link)
-            link.click()
-            document.body.removeChild(link); //下载完成移除元素
-            window.URL.revokeObjectURL(url); //释放掉blob对象
-          })
-          return;
+        if (this.isAnyExportLoading) {
+          return
+        }
+        const param = { ...this.queryParam }
+        return this.triggerExport(
+          this.url.exportCommodityList,
+          param,
+          '货品信息汇总_' + getNowFormatStr() + '.xls',
+          'commodity'
+        )
       },
       salesManExportExcel() {
-        let param ={}
-        param=this.queryParam
-        // this.$message.warning('请选择一条记录！');
-        downFile(this.url.exportSalesManList, param).then(res => {
-          const url = window.URL.createObjectURL(new Blob([res],{type: 'application/vnd.ms-excel'}));
-          const link = document.createElement('a');
-          link.href = url;
-          // link.download = '销售订单-' + formatDate+ '.xls';
-          link.style.display = 'none'
-          link.setAttribute('download',  '业务员汇总_'+getNowFormatStr()+'.xlsx')
-          document.body.appendChild(link)
-          link.click()
-          document.body.removeChild(link); //下载完成移除元素
-          window.URL.revokeObjectURL(url); //释放掉blob对象
-        })
-        return;
+        if (this.isAnyExportLoading) {
+          return
+        }
+        const param = { ...this.queryParam }
+        return this.triggerExport(
+          this.url.exportSalesManList,
+          param,
+          '业务员汇总_' + getNowFormatStr() + '.xlsx',
+          'salesMan'
+        )
       },
       // //零售出库|零售退货入库
       // retailExportExcel() {

@@ -11,7 +11,6 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.google.common.base.CaseFormat;
 import com.google.common.base.Splitter;
-import com.google.common.base.Stopwatch;
 import com.google.common.collect.Lists;
 import com.jsh.erp.constants.BusinessConstants;
 import com.jsh.erp.constants.ExceptionConstants;
@@ -49,7 +48,10 @@ import java.io.File;
 import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 import static com.jsh.erp.utils.ResponseJsonUtil.returnJson;
@@ -846,7 +848,6 @@ public class DepotHeadController {
                                    @RequestParam(value = "endTime", required = false) String endTime,
                                    @RequestParam(value = "embroideryReconciliationDate", required = false) String embroideryReconciliationDate,
                                    HttpServletRequest request, HttpServletResponse response) throws Exception {
-        Stopwatch stopwatch = Stopwatch.createStarted();
         User userInfo = userService.getCurrentUser();
         LambdaQueryWrapper<DepotHead> query = new LambdaQueryWrapper<>();
 //        query.select(DepotHead::getId);
@@ -919,16 +920,10 @@ public class DepotHeadController {
         query.last("limit 20000");
 
         List<DepotHead> depots = depotHeadNewService.mixList(query);
-        log.error("11111: {} ms", stopwatch.elapsed(TimeUnit.MILLISECONDS));
-        stopwatch.reset(); // 重置计时器
-        stopwatch.start(); // 重新开始计时
 
         // 分片大小
         int batchSize = 500;
         processDepotsInParallel2(depots, batchSize);
-        log.error("22222: {} ms", stopwatch.elapsed(TimeUnit.MILLISECONDS));
-        stopwatch.reset(); // 重置计时器
-        stopwatch.start(); // 重新开始计时
         if (StrUtil.contains(userInfo.getRoleName(), "业务员") || StrUtil.contains(userInfo.getRoleName(), "财务") || StrUtil.contains(userInfo.getRoleName(), "管理员")) {
             DepotHead dh = new DepotHead();
             dh.setSaleType("合计：");
@@ -980,9 +975,6 @@ public class DepotHeadController {
             dh.setStackStaff(" ");
             depots.add(dh);
         }
-        log.error("33333: {} ms", stopwatch.elapsed(TimeUnit.MILLISECONDS));
-        stopwatch.reset(); // 重置计时器
-        stopwatch.start(); // 重新开始计时
         //会员
         String[] names = {
                 "销售类型",
@@ -1142,12 +1134,7 @@ public class DepotHeadController {
                 .head(heads)
                 .sheet(title)
                 .doWrite(objects);
-        log.error("44444: {} ms", stopwatch.elapsed(TimeUnit.MILLISECONDS));
-        stopwatch.reset(); // 重置计时器
-        stopwatch.start(); // 重新开始计时
         response.flushBuffer();
-        log.error("55555: {} ms", stopwatch.elapsed(TimeUnit.MILLISECONDS));
-        stopwatch.stop();
     }
 
     private void processDepotsInParallel2(List<DepotHead> depots, int batchSize) {
