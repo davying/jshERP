@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.excel.EasyExcel;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -46,6 +47,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.math.BigDecimal;
+import java.net.URLEncoder;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
@@ -1053,7 +1055,7 @@ public class DepotHeadController {
                 "尾款是否结清"
         };
         String title = "销售订单";
-        List<String[]> objects = new ArrayList<String[]>();
+        List<List<String>> objects = new ArrayList<>();
         if (null != depots) {
             for (DepotHead s : depots) {
                 String[] objs = new String[68];
@@ -1125,14 +1127,25 @@ public class DepotHeadController {
                 objs[65] = s.getLogisticsFreight() == null ? "0" : StrUtil.toString(s.getLogisticsFreight().setScale(4, BigDecimal.ROUND_UP));
                 objs[66] = StrUtil.toString(s.getOrderCommission().setScale(4, BigDecimal.ROUND_UP));
                 objs[67] = StrUtil.isBlank(s.getEndStaff()) ? "否" : s.getEndStaff();
-                objects.add(objs);
+                objects.add(Arrays.asList(objs));
             }
         }
-        File file = ExcelUtils.exportObjectsWithoutTitle(title, "", names, title, objects);
+        List<List<String>> heads = Arrays.stream(names)
+                .map(item -> Collections.singletonList(StrUtil.nullToDefault(item, "")))
+                .collect(Collectors.toList());
+        response.setHeader("Content-Disposition",
+                "attachment;filename=" + URLEncoder.encode(title + ".xlsx", "UTF-8"));
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8");
+        response.setHeader("Cache-Control", "no-store");
+        response.addHeader("Cache-Control", "max-age=0");
+        EasyExcel.write(response.getOutputStream())
+                .head(heads)
+                .sheet(title)
+                .doWrite(objects);
         log.error("44444: {} ms", stopwatch.elapsed(TimeUnit.MILLISECONDS));
         stopwatch.reset(); // 重置计时器
         stopwatch.start(); // 重新开始计时
-        ExcelUtils.downloadExcel(file, file.getName(), response);
+        response.flushBuffer();
         log.error("55555: {} ms", stopwatch.elapsed(TimeUnit.MILLISECONDS));
         stopwatch.stop();
     }
