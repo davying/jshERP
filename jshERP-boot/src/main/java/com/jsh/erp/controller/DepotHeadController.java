@@ -1344,7 +1344,7 @@ public class DepotHeadController {
             query.ge(DepotHead::getCreateTime, beginTime.concat(" 00:00:00"));
         }
         if (StrUtil.isNotBlank(endTime)) {
-            query.le(StrUtil.isNotBlank(endTime), DepotHead::getCreateTime, endTime.concat(" 23:59:59"));
+            query.le(DepotHead::getCreateTime, endTime.concat(" 23:59:59"));
         }
         if (StrUtil.equals(isFinalPay, "是")) {
             query.apply("IFNULL(end_staff,'')='是'");

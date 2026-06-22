@@ -216,14 +216,22 @@ export const BillModalMixin = {
     initCommodityList() {
       let that = this;
       getCommodityList({}).then((res)=>{
-        if(res) {
-          that.commodityList.options = res.data.map((item) => {
-            return {
-              value: item.commodityNo,
-              label: item.name + "(" + item.commodityNo + ")",
-              name:item.name
-            };
-          });;
+        if(res && res.data) {
+          // 按货品编号去重，避免 a-select 因重复 value 出现定位错乱/滚动异常
+          const optionMap = new Map();
+          res.data.forEach((item) => {
+            const commodityNo = item.commodityNo;
+            if (!commodityNo || optionMap.has(commodityNo)) {
+              return;
+            }
+            const commodityName = item.name || '';
+            optionMap.set(commodityNo, {
+              value: commodityNo,
+              label: commodityName + "(" + commodityNo + ")",
+              name: commodityName
+            });
+          });
+          that.commodityList.options = Array.from(optionMap.values());
         }
       });
     },

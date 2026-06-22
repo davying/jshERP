@@ -100,8 +100,8 @@ public class SampleManagementLogController {
         query.eq(StrUtil.isNotBlank(sampleId), SampleManagementLog::getSampleId, sampleId);
         query.eq(StrUtil.isNotBlank(sampleNumber), SampleManagementLog::getSampleNumber, sampleNumber);
 
-        query.ge(StrUtil.isNotBlank(beginTime), SampleManagementLog::getCreateTime, beginTime.concat(" 00:00:00"));
-        query.le(StrUtil.isNotBlank(endTime), SampleManagementLog::getCreateTime, endTime.concat(" 23:59:59"));
+        query.ge(StrUtil.isNotBlank(beginTime), SampleManagementLog::getCreateTime, StrUtil.isNotBlank(beginTime) ? beginTime.concat(" 00:00:00") : null);
+        query.le(StrUtil.isNotBlank(endTime), SampleManagementLog::getCreateTime, StrUtil.isNotBlank(endTime) ? endTime.concat(" 23:59:59") : null);
         query.orderByAsc(SampleManagementLog::getId);
         List<SampleManagementLog> samples = sampleManagementLogService.list(query);
         String[] names = {

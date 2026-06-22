@@ -114,11 +114,13 @@
               <a-select
                   placeholder="请选择货品编号"
                   showSearch
+                  optionFilterProp="children"
+                  :filterOption="filterCommodityOption"
                   v-decorator.trim="['commodityNo', validatorRules.commodityNo]"
               >
                 <a-select-option
                     v-for="(site, index) in commodityList.options"
-                    :key="index"
+                    :key="site.value || index"
                     :value="site.value"
                 >{{ site.label }}</a-select-option
                 >
@@ -845,6 +847,10 @@ export default {
   mounted(){
   },
   methods: {
+    filterCommodityOption(input, option) {
+      const text = (option.componentOptions.children[0].text || "").toLowerCase();
+      return text.indexOf((input || "").toLowerCase()) >= 0;
+    },
     // 预览
     handlePreview (file) {
       this.previewImage = file.url || file.thumbUrl
