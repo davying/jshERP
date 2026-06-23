@@ -38,6 +38,8 @@
                   <a-select
                     placeholder="请选择货品编号"
                     showSearch
+                    optionFilterProp="children"
+                    :filterOption="filterCommodityOption"
                     v-decorator.trim="[
                       'commodityNo',
                       validatorRules.commodityNo,
@@ -45,7 +47,7 @@
                   >
                     <a-select-option
                       v-for="(site, index) in searchOptions.options"
-                      :key="index"
+                      :key="site.value || index"
                       :value="site.value"
                       >{{ site.label }}</a-select-option
                     >
@@ -438,20 +440,29 @@ export default {
   },
   computed: {},
   methods: {
+    filterCommodityOption(input, option) {
+      const children = option && option.componentOptions && option.componentOptions.children;
+      const text = (children && children[0] && children[0].text ? children[0].text : "").toLowerCase();
+      const keyword = (input || "").toLowerCase();
+      return text.indexOf(keyword) >= 0;
+    },
     searchCommodity() {
-      let lists = [];
       getAction(this.url.commodityList, null).then((res) => {
-        if (res.code == 1) {
-          for (let i of res.data) {
-            lists.push(i);
-          }
-          this.searchOptions.options = res.data.map((item) => {
-            return {
-              value: item.commodityNo,
-              label: item.name + "（" + item.commodityNo + "）",
-              name:item.name
-            };
+        if (res.code == 1 && res.data) {
+          const optionMap = new Map();
+          res.data.forEach((item) => {
+            const commodityNo = item.commodityNo;
+            if (!commodityNo || optionMap.has(commodityNo)) {
+              return;
+            }
+            const commodityName = item.name || "";
+            optionMap.set(commodityNo, {
+              value: commodityNo,
+              label: commodityName + "（" + commodityNo + "）",
+              name: commodityName
+            });
           });
+          this.searchOptions.options = Array.from(optionMap.values());
         }
 
         if (res.code == 0) {
