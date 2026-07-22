@@ -446,6 +446,12 @@ public class DepotHead {
     @TableField("invoice_remark")
     private String invoiceRemark;
 
+    @ApiModelProperty("付款日期")
+    @TableField("payment_date")
+    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    private Date paymentDate;
+
     @TableField(exist = false)
     private String action;
 

@@ -779,6 +779,17 @@
               />
             </a-form-item>
           </a-col>
+          <a-col :md="6" :sm="6">
+            <a-form-item
+                :labelCol="labelCol"
+                :wrapperCol="wrapperCol"
+                label="付款日期"
+            >
+              <j-date placeholder="请选择付款日期"
+                      v-decorator.trim="['paymentDate']"
+              />
+            </a-form-item>
+          </a-col>
         </a-row>
 
       </a-form>
@@ -1230,7 +1241,8 @@ export default {
                   "telephone",
                   "contactPerson",
                   "isChangeBag",
-                  "invoiceRemark"
+                  "invoiceRemark",
+                  "paymentDate"
               )
           );
         });

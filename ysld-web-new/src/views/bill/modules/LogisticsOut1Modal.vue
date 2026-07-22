@@ -116,6 +116,7 @@ export default {
             allowSearch:true, validateRules: [{ required: true, message: '${title}不能为空' }]
           },
           { title: '货品编码', key: 'commodityNo', width: '8%', type: FormTypes.normal },
+          { title: '客户', key: 'customer', width: '8%', type: FormTypes.normal },
           { title: '类型', key: 'type', width: '8%', type: FormTypes.select, placeholder: '请选择${title}', options: [],
             allowSearch:true, validateRules: [{ required: true, message: '${title}不能为空' }]
           },

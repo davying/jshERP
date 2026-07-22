@@ -1518,3 +1518,9 @@ INSERT INTO `jsh_platform_config` (`platform_key`, `platform_key_info`, `platfor
 -- --------------------------------------------------------
 alter table jsh_supplier add creator bigint(20) DEFAULT NULL COMMENT '操作员' after sort;
 update jsh_supplier set creator=tenant_id;
+
+-- --------------------------------------------------------
+-- 时间 2026年06月26日
+-- 销售订单(财)增加付款日期字段
+-- --------------------------------------------------------
+alter table jsh_depot_head add payment_date datetime DEFAULT NULL COMMENT '付款日期' after invoice_remark;

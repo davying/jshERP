@@ -444,6 +444,7 @@
           {title: '成本金额', dataIndex: 'financialCostAmount', width: 80, ellipsis:true,align: "center"},
           {title: '订单物流费', dataIndex: 'logisticsFreight', width: 90, ellipsis:true,align: "center"},
           {title: '订单提成', dataIndex: 'orderCommission', width: 90, ellipsis:true,align: "center"},
+          {title: '付款日期', dataIndex: 'paymentDate', width: 100, ellipsis:true,align: "center"},
           // {title: '单位', dataIndex: 'unit', width: 50, ellipsis:true,align: "center"},
           // {title: '下单备注', dataIndex: 'orderRemark', width: 90, ellipsis:true,align: "center"},
           // {title: '运费付款方', dataIndex: 'freightPayer', width: 90, ellipsis:true,align: "center"},

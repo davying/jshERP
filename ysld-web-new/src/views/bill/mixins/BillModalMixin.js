@@ -796,6 +796,7 @@ export const BillModalMixin = {
         if (res && res.code ==1) {
           target.setValues([{rowKey: row.id, values:
                 {commodityNo: res.data.commodityNo,
+                  customer: res.data.customer,
                   color: res.data.color,
                   salesMan: res.data.salesMan,
                   freightPayer: res.data.freightPayer,
