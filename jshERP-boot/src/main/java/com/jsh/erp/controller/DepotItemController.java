@@ -5,7 +5,6 @@ import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.google.common.base.Stopwatch;
 import com.google.common.collect.Lists;
 import com.jsh.erp.constants.BusinessConstants;
 import com.jsh.erp.constants.ExceptionConstants;
@@ -946,7 +945,6 @@ public class DepotItemController {
     public BaseResponseInfo buyOrSalePrice(@RequestParam(value = "roleType", required = false) String roleType,
                                            @RequestParam(value = "deptName", required = false) String deptName,
                                            HttpServletRequest request, HttpServletResponse response) throws Exception {
-        Stopwatch watch = Stopwatch.createStarted();
         BaseResponseInfo res = new BaseResponseInfo();
         List<Map<String, String>> users = Lists.newArrayList();
         Map<String, Object> map = new HashMap<String, Object>();
@@ -1047,6 +1045,7 @@ public class DepotItemController {
         }
         map.put("expressPriceList", expressPriceList);
         DepotHeadVO param = new DepotHeadVO();
+        param.setCurrentYear(true);
 
         if (StrUtil.contains(userInfo.getRoleName(), "业务员") || StrUtil.contains(userInfo.getRoleName(), "仓库")) {
             List<String> one = Lists.newArrayList();
@@ -1055,11 +1054,14 @@ public class DepotItemController {
         } else {
             param.setCreators(userIds);
         }
+        // 业务员统计
         List<SalesManExportVO> salesMan = depotHeadNewMapper.exportSalesManList(param);
         map.put("salesMan", salesMan);
+        // 货品统计
         List<CommodityExportVO> commodityList = depotHeadNewMapper.exportCommodityList(param);
         map.put("commodityList", commodityList);
         param.setLimit(20);
+        // 款式统计
         List<CommodityExportVO> commodityNoList = depotHeadNewMapper.exportCommodityNoList(param);
         map.put("commodityNoList", commodityNoList);
         res.code = 200;

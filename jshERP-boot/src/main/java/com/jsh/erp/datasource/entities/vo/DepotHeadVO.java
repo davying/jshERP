@@ -15,4 +15,5 @@ public class DepotHeadVO {
     private List<String> creators;
     private Integer limit;
     private String years;
+    private Boolean currentYear;
 }

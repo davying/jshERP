@@ -2,6 +2,19 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.jsh.erp.datasource.mappers.custom.DepotHeadNewMapper">
 
+    <sql id="currentYearCreateTimeCondition">
+        <if test="param.currentYear != null and param.currentYear">
+            AND create_time &gt;= MAKEDATE(YEAR(CURDATE()), 1)
+            AND create_time &lt; MAKEDATE(YEAR(CURDATE()) + 1, 1)
+        </if>
+    </sql>
+
+    <sql id="currentYearOperTimeCondition">
+        <if test="param.currentYear != null and param.currentYear">
+            AND oper_time &gt;= MAKEDATE(YEAR(CURDATE()), 1)
+            AND oper_time &lt; MAKEDATE(YEAR(CURDATE()) + 1, 1)
+        </if>
+    </sql>
 
     <select id="getErrorFinancialTaxAmount" resultType="com.jsh.erp.datasource.entities.DepotHead">
     SELECT a.* from jsh_depot_head a,(
@@ -31,6 +44,7 @@
         <if test="param.beginTime !=null and param.beginTime !='' and param.endTime !=null and param.endTime !=''">
             AND DATE_FORMAT(create_time,'%Y-%m-%d') between #{param.beginTime} and #{param.endTime}
         </if>
+        <include refid="currentYearCreateTimeCondition"/>
         <if test="param.creators != null " >
             AND creator in
             <foreach collection="param.creators" index="index" item="item" open="(" separator="," close=")">
@@ -55,6 +69,7 @@
         <if test="param.beginTime !=null and param.beginTime !='' and param.endTime !=null and param.endTime !=''">
             AND DATE_FORMAT(create_time,'%Y-%m-%d') between #{param.beginTime} and #{param.endTime}
         </if>
+        <include refid="currentYearCreateTimeCondition"/>
         <if test="param.commodityNo !=null and param.commodityNo !=''">
             AND commodity_no=#{param.commodityNo}
         </if>
@@ -81,7 +96,7 @@
         SELECT
         any_value(sales_man) as salesMan,
         sum(numbers) as numbers,
-        date_format(create_time,'%Y') as years,
+        date_format(oper_time,'%Y') as years,
         sum(total_financial_price) as amount,
         count(id) as depots
         from jsh_depot_head
@@ -89,14 +104,15 @@
         <if test="param.beginTime !=null and param.beginTime !='' and param.endTime !=null and param.endTime !=''">
             AND DATE_FORMAT(oper_time,'%Y-%m-%d') between #{param.beginTime} and #{param.endTime}
         </if>
+        <include refid="currentYearOperTimeCondition"/>
         <if test="param.creators != null " >
             AND creator in
             <foreach collection="param.creators" index="index" item="item" open="(" separator="," close=")">
                 #{item}
             </foreach>
         </if>
-        GROUP BY sales_man,date_format(create_time,'%Y')
-        ORDER BY date_format(create_time,'%Y') asc,sum(total_financial_price) DESC
+        GROUP BY sales_man,date_format(oper_time,'%Y')
+        ORDER BY date_format(oper_time,'%Y') asc,sum(total_financial_price) DESC
     </select>
 
     <select id="mixList" resultType="com.jsh.erp.datasource.entities.DepotHead">

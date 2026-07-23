@@ -31,7 +31,6 @@ public interface DepotHeadNewMapper extends BaseMapper<DepotHead> {
 
     List<SalesManExportVO> exportSalesManList(@Param("param") DepotHeadVO param);
 
-
     List<DepotHead> mixList(@Param(Constants.WRAPPER) Wrapper<DepotHead> queryWrapper);
 
 
