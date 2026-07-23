@@ -36,10 +36,11 @@
               <a-select
                   showSearch
                   placeholder="请选择订单编号"
+                  optionFilterProp="children"
                   v-decorator.trim="[
                       'depotId',validatorRules.depotId
                     ]"
-                  @blur="getCommodityNo()"
+                  @change="getCommodityNo"
               >
                 <a-select-option
                     v-for="(site, index) in depotListOptions.options"
@@ -49,6 +50,19 @@
                 >{{ site.label }}</a-select-option
                 >
               </a-select>
+            </a-form-item>
+          </a-col>
+          <a-col :md="6" :sm="6">
+            <a-form-item
+                :labelCol="labelCol"
+                :wrapperCol="wrapperCol"
+                label="客户名称"
+                data-step="1"
+                data-title="客户名称"
+                data-intro="选择订单后自动带出客户名称"
+            >
+              <a-input disabled v-decorator.trim="['customer']"
+              />
             </a-form-item>
           </a-col>
           <a-col :md="6" :sm="6">
@@ -323,6 +337,19 @@
             <a-form-item
                 :labelCol="labelCol"
                 :wrapperCol="wrapperCol"
+                label="运费付款方"
+                data-step="1"
+                data-title="运费付款方"
+                data-intro="运费付款方非必填"
+            >
+              <a-input v-decorator.trim="['freightPayer']"
+              />
+            </a-form-item>
+          </a-col>
+          <a-col :md="6" :sm="6">
+            <a-form-item
+                :labelCol="labelCol"
+                :wrapperCol="wrapperCol"
                 label="物流运费"
                 data-step="1"
                 data-title="物流运费"
@@ -332,7 +359,7 @@
               />
             </a-form-item>
           </a-col>
-          <a-col :md="6" :sm="6">
+          <a-col v-if="model.id" :md="6" :sm="6">
             <a-form-item
                 :labelCol="labelCol"
                 :wrapperCol="wrapperCol"
@@ -360,7 +387,7 @@
           </a-col>
         </a-row>
         <a-row class="form-row" :gutter="24">
-          <a-col :md="6" :sm="12">
+          <a-col v-if="model.id" :md="6" :sm="12">
             <a-form-item
                 :labelCol="labelCol"
                 :wrapperCol="wrapperCol"
@@ -385,6 +412,91 @@
               <a-textarea v-decorator.trim="['remark']" onmouseover="this.title=this.value"
               />
             </a-form-item>
+          </a-col>
+        </a-row>
+        <a-row class="form-row" :gutter="24">
+          <a-col :md="24" :sm="24">
+            <div class="logistics-detail-card">
+              <div class="logistics-detail-title">
+                <span>物流明细</span>
+                <a-button
+                    size="small"
+                    type="primary"
+                    icon="plus"
+                    :disabled="logisticsDetails.length >= logisticsMaxDetailCount"
+                    @click="addLogisticsDetail"
+                >新增明细</a-button>
+              </div>
+              <table class="logistics-detail-table">
+                <thead>
+                <tr>
+                  <th>物流方式</th>
+                  <th>发货日期</th>
+                  <th>物流单号</th>
+                  <th>发货数量</th>
+                  <th>运费</th>
+                  <th>操作</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr v-for="(detail, index) in logisticsDetails" :key="detail.uid">
+                  <td>
+                    <a-select
+                        v-model="detail.logisticsMode"
+                        placeholder="请选择物流方式"
+                        @change="handleLogisticsDetailChange"
+                    >
+                      <a-select-option
+                          v-for="mode in logisticsDetailModes"
+                          :key="mode"
+                          :value="mode"
+                      >{{ mode }}</a-select-option>
+                    </a-select>
+                  </td>
+                  <td>
+                    <j-date
+                        v-model="detail.deliveryDate"
+                        placeholder="请选择日期"
+                        :dateFormat="'YYYY-MM-DD'"
+                        style="width: 100%"
+                    />
+                  </td>
+                  <td>
+                    <a-input
+                        v-model="detail.shippingOrderNumber"
+                        placeholder="请输入物流单号"
+                        @change="handleLogisticsDetailChange"
+                    />
+                  </td>
+                  <td>
+                    <a-input
+                        v-model="detail.deliveryQuantity"
+                        placeholder="请输入发货数量"
+                        @change="handleLogisticsDetailChange"
+                    />
+                  </td>
+                  <td>
+                    <a-input
+                        v-model="detail.freight"
+                        placeholder="请输入运费"
+                        @change="handleLogisticsDetailChange"
+                    />
+                  </td>
+                  <td class="logistics-detail-action">
+                    <a-button
+                        size="small"
+                        type="link"
+                        :disabled="logisticsDetails.length <= 1"
+                        @click="removeLogisticsDetail(index)"
+                    >删除</a-button>
+                  </td>
+                </tr>
+                </tbody>
+              </table>
+              <div class="logistics-detail-summary">
+                最多 8 条物流明细；汇总后自动回显到“物流运费”和“实发数量”。
+              </div>
+            </div>
           </a-col>
         </a-row>
       </a-form>
@@ -416,6 +528,10 @@ export default {
   data() {
     return {
       commodityNo:'',
+      logisticsDetailModes: ["三轮车", "壹米滴答", "百世快运", "报销"],
+      logisticsMaxDetailCount: 8,
+      logisticsDetailUid: 0,
+      logisticsDetails: [],
       modalStyle: {},
       prefixNo: "YPGL",
       searchOptions: {
@@ -493,11 +609,158 @@ export default {
   created() {
     let realScreenWidth = window.screen.width;
     this.width = realScreenWidth < 1500 ? "1200px" : "1400px";
+    this.getDepotHeadIds();
     // this.searchLinkNumber();
-    // this.getDepotHeadIds();
   },
   computed: {},
   methods: {
+    nextLogisticsDetailUid() {
+      this.logisticsDetailUid += 1;
+      return `logistics_detail_${this.logisticsDetailUid}`;
+    },
+    createEmptyLogisticsDetail(detail) {
+      const source = detail || {};
+      return {
+        uid: source.uid || this.nextLogisticsDetailUid(),
+        logisticsMode: source.logisticsMode || "",
+        deliveryDate: source.deliveryDate || "",
+        shippingOrderNumber: source.shippingOrderNumber || source.trackingNo || "",
+        deliveryQuantity: this.normalizeLogisticsInput(source.deliveryQuantity || source.quantity),
+        freight: this.normalizeLogisticsInput(source.freight),
+      };
+    },
+    createEmptyLogisticsDetails() {
+      return [this.createEmptyLogisticsDetail()];
+    },
+    normalizeLogisticsDetails(value) {
+      let source = [];
+      if (Array.isArray(value)) {
+        source = value;
+      } else if (value) {
+        try {
+          source = JSON.parse(value);
+        } catch (e) {
+          source = [];
+        }
+      }
+      const details = source
+          .filter((detail) => detail)
+          .slice(0, this.logisticsMaxDetailCount)
+          .map((detail) => this.createEmptyLogisticsDetail(detail));
+      return details.length > 0 ? details : this.createEmptyLogisticsDetails();
+    },
+    normalizeLogisticsInput(value) {
+      if (value === null || value === undefined || value === "") {
+        return "";
+      }
+      return value;
+    },
+    toNumber(value) {
+      const number = Number(value);
+      return Number.isFinite(number) ? number : 0;
+    },
+    toQuantity(value) {
+      return Math.trunc(this.toNumber(value));
+    },
+    formatAmount(value) {
+      const amount = this.toNumber(value);
+      return Number.isInteger(amount) ? String(amount) : String(Number(amount.toFixed(4)));
+    },
+    buildLogisticsDetailsJson() {
+      const details = this.logisticsDetails
+          .map((detail) => ({
+            logisticsMode: detail.logisticsMode,
+            deliveryDate: detail.deliveryDate || "",
+            shippingOrderNumber: detail.shippingOrderNumber || "",
+            deliveryQuantity: this.toQuantity(detail.deliveryQuantity),
+            freight: this.toNumber(detail.freight),
+          }))
+          .filter((detail) => detail.shippingOrderNumber || detail.deliveryQuantity || detail.freight);
+      return JSON.stringify(details);
+    },
+    handleLogisticsDetailChange() {
+      const totalFreight = this.logisticsDetails.reduce((total, detail) => total + this.toNumber(detail.freight), 0);
+      const totalQuantity = this.logisticsDetails.reduce((total, detail) => total + this.toQuantity(detail.deliveryQuantity), 0);
+      this.$nextTick(() => {
+        this.form.setFieldsValue({
+          logisticsFreight: this.formatAmount(totalFreight),
+          actualQuantity: totalQuantity,
+        });
+      });
+    },
+    addLogisticsDetail() {
+      if (this.logisticsDetails.length >= this.logisticsMaxDetailCount) {
+        this.$message.warning(`最多只能添加${this.logisticsMaxDetailCount}条物流明细`);
+        return;
+      }
+      this.logisticsDetails.push(this.createEmptyLogisticsDetail());
+    },
+    removeLogisticsDetail(index) {
+      if (this.logisticsDetails.length <= 1) {
+        return;
+      }
+      this.logisticsDetails.splice(index, 1);
+      this.handleLogisticsDetailChange();
+    },
+    getSelectedDepot(depotId) {
+      return this.depotListOptions.options.find((item) => item.value == depotId) || {};
+    },
+    isSuccessResult(res) {
+      return res && (res.code === 200 || res.code == 1);
+    },
+    getSizeFieldKeys() {
+      return ["size1", "size2", "size3", "size4", "size5", "size6", "size7", "size8", "size9", "size10", "size11"];
+    },
+    buildSizeFieldValues(source) {
+      return this.getSizeFieldKeys().reduce((values, key) => {
+        values[key] = source && source[key] ? source[key] : 0;
+        return values;
+      }, {});
+    },
+    calculateSizeTotal(sizeValues) {
+      return this.getSizeFieldKeys().reduce((total, key) => total + Number(sizeValues[key] || 0), 0);
+    },
+    buildCommodityLabel(source, selectedDepot) {
+      const commodityNo = source.commodityNo || selectedDepot.commodityNo || "";
+      const commodityName = source.commodityName || selectedDepot.commodityName || "";
+      if (!commodityNo) {
+        return selectedDepot.name || "";
+      }
+      return commodityName ? `${commodityNo}（${commodityName}）` : commodityNo;
+    },
+    applyDepotOutInfo(source, selectedDepot) {
+      const orderInfo = source || {};
+      const depotInfo = selectedDepot || {};
+      const sizeValues = this.buildSizeFieldValues(orderInfo);
+      const numbers = orderInfo.numbers === undefined || orderInfo.numbers === null
+          ? this.calculateSizeTotal(sizeValues)
+          : orderInfo.numbers;
+      this.canSaleOutObj = orderInfo;
+      this.form.setFieldsValue({
+        commodityNo: this.buildCommodityLabel(orderInfo, depotInfo),
+        customer: orderInfo.customer || depotInfo.customer || "",
+        color: orderInfo.color || depotInfo.color || "",
+        freightPayer: orderInfo.freightPayer || depotInfo.freightPayer || "",
+        ...sizeValues,
+        numbers,
+      });
+      this.handleOkDisabled = false;
+    },
+    loadDepotOutInfo(depotId, selectedDepot) {
+      if (!depotId) {
+        return Promise.resolve();
+      }
+      return getAction(this.url.checkNumberOutInfo, {type:"发货",depotId}).then((res) => {
+        if (this.isSuccessResult(res) && res.data) {
+          this.applyDepotOutInfo(res.data, selectedDepot || this.getSelectedDepot(depotId));
+          return;
+        }
+        if (res && res.code == 0) {
+          this.handleOkDisabled = true;
+          this.$message.error(res.msg);
+        }
+      });
+    },
     handleTypeChange(){
       let typeStr = this.form.getFieldValue("type");
       let depotIdStr = this.form.getFieldValue("depotId");
@@ -537,62 +800,40 @@ export default {
         this.size10Disabled=false;
         this.size11Disabled=false;
       }
-      getAction(this.url.checkNumberOutInfo, {type:"发货",depotId:depotIdStr}).then((res) => {
-        if (res.code == 1) {
-          this.canSaleOutObj=res.data;
-          this.form.setFieldsValue({"size1": this.canSaleOutObj.size1||0});
-          this.form.setFieldsValue({"size2": this.canSaleOutObj.size2||0});
-          this.form.setFieldsValue({"size3": this.canSaleOutObj.size3||0});
-          this.form.setFieldsValue({"size4": this.canSaleOutObj.size4||0});
-          this.form.setFieldsValue({"size5": this.canSaleOutObj.size5||0});
-          this.form.setFieldsValue({"size6": this.canSaleOutObj.size6||0});
-          this.form.setFieldsValue({"size7": this.canSaleOutObj.size7||0});
-          this.form.setFieldsValue({"size8": this.canSaleOutObj.size8||0});
-          this.form.setFieldsValue({"size9": this.canSaleOutObj.size9||0});
-          this.form.setFieldsValue({"size10": this.canSaleOutObj.size10||0});
-          this.form.setFieldsValue({"size11": this.canSaleOutObj.size11||0});
-          let num = 0;
-          for (let i = 1; i < 12; i++) {
-            if (this.form.getFieldValue("size" + i)) {
-              num += Number(this.form.getFieldValue("size" + i));
-            }
-          }
-          this.form.setFieldsValue({
-            numbers: num,
-          });
-          this.handleOkDisabled=false;
-        }
-        if (res.code == 0) {
-          this.handleOkDisabled=true;
-          this.$message.error(res.msg);
-        }
-      });
+      this.loadDepotOutInfo(depotIdStr, this.getSelectedDepot(depotIdStr));
     },
-    getCommodityNo(){
-      this.form.setFieldsValue({
-        commodityNo:this.depotListOptions.options.find(
-            (item) => item.value == this.form.getFieldValue("depotId")
-        ).name
-      });
-      this.form.setFieldsValue({
-        color:this.depotListOptions.options.find(
-            (item) => item.value == this.form.getFieldValue("depotId")
-        ).color
-      });
+    getCommodityNo(value){
+      const depotId = value || this.form.getFieldValue("depotId");
+      const selectedDepot = this.getSelectedDepot(depotId);
+      if (selectedDepot.value) {
+        this.form.setFieldsValue({
+          commodityNo: selectedDepot.name,
+          customer: selectedDepot.customer || "",
+          color: selectedDepot.color,
+          freightPayer: selectedDepot.freightPayer || ""
+        });
+      }
+      this.loadDepotOutInfo(depotId, selectedDepot);
     },
     getDepotHeadIds() {
-      postAction(this.url.getDepotHeadIds, {status:'4,9'}).then((res) => {
-        if (res.code == 1) {
+      return postAction(this.url.getDepotHeadIds, {status:'4,9', type:'发货'}).then((res) => {
+        if (this.isSuccessResult(res) && Array.isArray(res.data)) {
           this.depotListOptions.options = res.data.map((item) => {
             return {
-              value: item.number,
+              value: item.number + '',
               label: item.number + "（" + item.salesMan + "）",
               name:item.commodityNo + "（" + item.commodityName + "）",
+              commodityNo: item.commodityNo,
+              commodityName: item.commodityName,
+              customer: item.customer,
+              freightPayer: item.freightPayer,
               color:item.color,
             };
           });
+          return;
         }
-        if (res.code == 0) {
+        this.depotListOptions.options = [];
+        if (res && res.msg) {
           this.$message.warning(res.msg);
         }
       });
@@ -627,6 +868,7 @@ export default {
       ]);
     },
     add() {
+      this.getDepotHeadIds();
       //隐藏多属性
       // 默认新增一条数据
       this.getAllTable().then((editableTables) => {
@@ -637,6 +879,7 @@ export default {
     edit(record) {
       this.form.resetFields();
       this.model = Object.assign({}, record);
+      this.logisticsDetails = this.normalizeLogisticsDetails(this.model.logisticsDetailsJson);
       this.activeKey = "1";
       this.visible = true;
       this.modalStyle = "top:20px;height: 95%;";
@@ -657,6 +900,7 @@ export default {
                 "depotId",
                 "commodityNo",
                 "commodityName",
+                "customer",
                 "size2",
                 "size3",
                 "size4",
@@ -671,6 +915,7 @@ export default {
                 "inTime",
                 "price",
                 "deliveryDate",
+                "freightPayer",
                 "logisticsFreight",
                 "logisticsMode",
                 "actualQuantity",
@@ -759,15 +1004,18 @@ export default {
             return
           }
           let param={}
+          const logisticsDetailsJson = this.buildLogisticsDetailsJson();
           if(this.model.id){
             param = {
               ...values,
               id: this.model.id,
+              logisticsDetailsJson,
             };
           }else{
             param = {
               ...values,
               id: this.model.id,
+              logisticsDetailsJson,
               commodityNo: this.form.getFieldValue("commodityNo").split("（")[0],
               commodityName: this.form.getFieldValue("commodityNo").split("（")[1].replace("）",""),
             };
@@ -822,5 +1070,65 @@ export default {
   padding: 0px 11px;
   color: #bbb;
   background-color: #ffffff;
+}
+.logistics-detail-card {
+  margin: 0 20px 18px 20px;
+  padding: 12px 16px;
+  border: 1px solid #e8e8e8;
+  border-radius: 4px;
+  background: #fafafa;
+}
+.logistics-detail-title {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+  font-weight: 600;
+  color: #333;
+}
+.logistics-detail-title span {
+  font-size: 16px;
+  line-height: 24px;
+}
+.logistics-detail-title .ant-btn {
+  height: 28px;
+  margin-left: 16px;
+  padding: 0 12px;
+  font-size: 13px;
+  line-height: 26px;
+}
+.logistics-detail-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+}
+.logistics-detail-table th,
+.logistics-detail-table td {
+  padding: 8px;
+  border: 1px solid #e8e8e8;
+}
+.logistics-detail-table th {
+  background: #f5f5f5;
+  color: #333;
+}
+.logistics-detail-table td:first-child {
+  width: 130px;
+  text-align: center;
+  color: #333;
+}
+.logistics-detail-table td:nth-child(2) {
+  width: 150px;
+}
+.logistics-detail-table td:last-child {
+  width: 70px;
+  text-align: center;
+}
+.logistics-detail-table .ant-select,
+.logistics-detail-table .ant-input,
+.logistics-detail-table .ant-calendar-picker {
+  width: 100%;
+}
+.logistics-detail-summary {
+  margin-top: 8px;
+  color: #888;
 }
 </style>

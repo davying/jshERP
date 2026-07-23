@@ -645,13 +645,14 @@ public class WarehouseManagementController {
                 "物流方式",
                 "实发数量",
                 "发货单号",
+                "物流明细",
                 "备注"
         };
         String title = "销售订单物流信息";
         List<String[]> objects = new ArrayList<String[]>();
         if (null != wmsOut) {
             for (WarehouseManagement s : wmsOut) {
-                String[] objs = new String[24];
+                String[] objs = new String[25];
                 objs[0] = s.getDepotId();
                 objs[1] = s.getCommodityNo();
                 objs[2] = s.getCommodityName();
@@ -669,18 +670,97 @@ public class WarehouseManagementController {
                 objs[14] = s.getSize9() == null || s.getSize9() == 0 ? "" : StrUtil.toString(s.getSize9());
                 objs[15] = s.getSize10() == null || s.getSize10() == 0 ? "" : StrUtil.toString(s.getSize10());
                 objs[16] = s.getSize11() == null || s.getSize11() == 0 ? "" : StrUtil.toString(s.getSize11());
-                objs[17] = StrUtil.toString(s.getNumbers());
-                objs[18] = DateUtil.format(s.getDeliveryDate(), "yyyy-MM-dd");
-                objs[19] = s.getLogisticsFreight() == null ? "0" : StrUtil.toString(s.getLogisticsFreight().setScale(4, BigDecimal.ROUND_UP));
+                objs[17] = s.getNumbers() == null ? "" : StrUtil.toString(s.getNumbers());
+                objs[18] = s.getDeliveryDate() == null ? "" : DateUtil.format(s.getDeliveryDate(), "yyyy-MM-dd");
+                objs[19] = s.getLogisticsFreight() == null ? "0" : formatNumberValue(s.getLogisticsFreight());
                 objs[20] = s.getLogisticsMode();
-                objs[21] = StrUtil.toString(StrUtil.toString(s.getSize11()));
+                objs[21] = s.getActualQuantity() == null ? "" : StrUtil.toString(s.getActualQuantity());
                 objs[22] = s.getShippingOrderNumber();
-                objs[23] = s.getRemark();
+                objs[23] = formatLogisticsDetails(s.getLogisticsDetailsJson());
+                objs[24] = s.getRemark();
                 objects.add(objs);
             }
         }
         File file = ExcelUtils.exportObjectsWithoutTitle(title, "", names, title, objects);
         ExcelUtils.downloadExcel(file, file.getName(), response);
+    }
+
+    private String formatLogisticsDetails(String logisticsDetailsJson) {
+        if (StrUtil.isBlank(logisticsDetailsJson)) {
+            return "";
+        }
+        try {
+            JSONArray details = JSONArray.parseArray(logisticsDetailsJson);
+            if (CollUtil.isEmpty(details)) {
+                return "";
+            }
+            List<String> formattedDetails = new ArrayList<>();
+            for (int i = 0; i < details.size(); i++) {
+                JSONObject detail = details.getJSONObject(i);
+                if (detail == null) {
+                    continue;
+                }
+                String formattedDetail = formatLogisticsDetail(detail);
+                if (StrUtil.isNotBlank(formattedDetail)) {
+                    formattedDetails.add(formattedDetail);
+                }
+            }
+            return CollUtil.isEmpty(formattedDetails) ? "" : String.join("；", formattedDetails);
+        } catch (Exception e) {
+            return logisticsDetailsJson;
+        }
+    }
+
+    private String formatLogisticsDetail(JSONObject detail) {
+        String logisticsMode = detail.getString("logisticsMode");
+        String deliveryDate = detail.getString("deliveryDate");
+        String shippingOrderNumber = detail.getString("shippingOrderNumber");
+        String deliveryQuantity = formatNumberValue(detail.get("deliveryQuantity"));
+        String freight = formatNumberValue(detail.get("freight"));
+
+        StringBuilder builder = new StringBuilder();
+        if (StrUtil.isNotBlank(logisticsMode)) {
+            builder.append(logisticsMode);
+        }
+        if (StrUtil.isNotBlank(deliveryDate)) {
+            builder.append("[").append(deliveryDate).append("]");
+        }
+        if (StrUtil.isNotBlank(shippingOrderNumber)) {
+            if (builder.length() > 0) {
+                builder.append(":");
+            }
+            builder.append(shippingOrderNumber);
+        }
+        appendLogisticsDetailPart(builder, deliveryQuantity, "件");
+        appendLogisticsDetailPart(builder, freight, "元");
+        return builder.toString();
+    }
+
+    private void appendLogisticsDetailPart(StringBuilder builder, String value, String unit) {
+        if (StrUtil.isBlank(value)) {
+            return;
+        }
+        if (builder.length() > 0) {
+            builder.append("/");
+        }
+        builder.append(value).append(unit);
+    }
+
+    private String formatNumberValue(Object value) {
+        if (value == null) {
+            return "";
+        }
+        if (value instanceof BigDecimal) {
+            return ((BigDecimal) value).stripTrailingZeros().toPlainString();
+        }
+        if (value instanceof Number) {
+            try {
+                return new BigDecimal(StrUtil.toString(value)).stripTrailingZeros().toPlainString();
+            } catch (Exception e) {
+                return StrUtil.toString(value);
+            }
+        }
+        return StrUtil.toString(value);
     }
 
     /**

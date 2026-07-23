@@ -133,7 +133,7 @@
         </div>
         <!-- 操作按钮区域 -->
         <div class="table-operator"  style="margin-top: 5px">
-          <a-button @click="myHandleAdd1" type="primary" icon="plus">新增</a-button>
+          <a-button @click="myHandleAdd" type="primary" icon="plus">新增</a-button>
           <a-button type="primary" @click="retailExportExcel()">导出</a-button>
         </div>
         <!-- table区域-begin -->
@@ -181,7 +181,6 @@
         <!-- table区域-end -->
         <!-- 表单区域 -->
         <logistics-out-modal ref="modalForm" @ok="modalFormOk" @close="modalFormClose"></logistics-out-modal>
-        <logistics-out1-modal ref="modalForm1" @ok="modalFormOk" @close="modalFormClose"></logistics-out1-modal>
         <bill-detail ref="modalDetail" @ok="modalFormOk" @close="modalFormClose"></bill-detail>
       </a-card>
     </a-col>
@@ -189,7 +188,6 @@
 </template>
 <script>
   import LogisticsOutModal from './modules/LogisticsOutModal'
-  import LogisticsOut1Modal from './modules/LogisticsOut1Modal'
   import BillDetail from './dialog/BillDetail'
   import { JeecgListMixin } from '@/mixins/JeecgListMixin'
   import { BillListMixin } from './mixins/BillListMixin'
@@ -202,7 +200,6 @@
     mixins:[JeecgListMixin,BillListMixin],
     components: {
       LogisticsOutModal,
-      LogisticsOut1Modal,
       BillDetail,
       JDate
     },
@@ -339,6 +336,25 @@
           {title: '物流方式', dataIndex: 'logisticsMode', width: 80,ellipsis:true,align: "center"},
           {title: '实发数量', dataIndex: 'actualQuantity', width: 80,ellipsis:true,align: "center"},
           {title: '发货单号', dataIndex: 'shippingOrderNumber', width: 80,ellipsis:true,align: "center"},
+          {title: '物流明细', dataIndex: 'logisticsDetailsJson', width: 180,ellipsis:true,align: "center",
+            customRender:function (text) {
+              if (!text) {
+                return ''
+              }
+              try {
+                const details = JSON.parse(text)
+                if (!(details instanceof Array)) {
+                  return text
+                }
+                return details
+                  .filter(item => item && (item.deliveryDate || item.shippingOrderNumber || item.deliveryQuantity || item.freight))
+                  .map(item => `${item.logisticsMode || ''}${item.deliveryDate ? '[' + item.deliveryDate + ']' : ''}:${item.shippingOrderNumber || ''}/${item.deliveryQuantity || 0}件/${item.freight || 0}元`)
+                  .join('；')
+              } catch (e) {
+                return text
+              }
+            }
+          },
           {title: '备注', dataIndex: 'remark', width: 100,ellipsis:true}
           // { title: '含税合计', dataIndex: 'totalTaxLastMoney',width:80,
           //   customRender:function (text,record,index) {
@@ -445,15 +461,6 @@
         } else {
           this.$message.warning("抱歉，只有未审核的单据才能编辑！")
         }
-      },
-      myHandleAdd1() {
-        this.$refs.modalForm1.action = "add";
-        if(this.btnEnableList.indexOf(2)===-1) {
-          this.$refs.modalForm1.isCanCheck = false
-        }
-        this.$refs.modalForm1.add();
-        this.$refs.modalForm1.title = "新增";
-        this.$refs.modalForm1.disableSubmit = false;
       },
     }
   }

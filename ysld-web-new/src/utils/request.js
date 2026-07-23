@@ -12,6 +12,7 @@ import { ACCESS_TOKEN } from "@/store/mutation-types"
  * @type {*|string}
  */
 let apiBaseUrl = window._CONFIG['domianURL'] || "/jshERP-boot";
+let loginExpiredModalVisible = false
 //console.log("apiBaseUrl= ",apiBaseUrl)
 // 创建 axios 实例
 const service = axios.create({
@@ -37,6 +38,14 @@ function logRequestCost(config, status) {
   console.log('[API]', method, url, 'status:', status, 'cost:', duration + 'ms')
 }
 
+function resolveHttpError(error, fallbackMessage) {
+  const response = error && error.response
+  const status = response ? response.status : 0
+  const data = response ? response.data : null
+  const message = fallbackMessage || (data && data.message) || (typeof data === 'string' ? data : '接口请求失败')
+  return Promise.resolve({ code: status, data: data, message: message, success: false })
+}
+
 const err = (error) => {
   if (error && error.config) {
     const status = error.response ? error.response.status : 'NETWORK_ERROR'
@@ -51,16 +60,20 @@ const err = (error) => {
         break
       case 500:
         if(token && data==="loginOut"){
-          Modal.error({
-            title: '登录已过期',
-            content: '很抱歉，登录已过期，请重新登录',
-            okText: '重新登录',
-            mask: false,
-            onOk: () => {
-              Vue.ls.remove(ACCESS_TOKEN)
-              window.location.reload()
-            }
-          })
+          if (!loginExpiredModalVisible) {
+            loginExpiredModalVisible = true
+            Modal.error({
+              title: '登录已过期',
+              content: '很抱歉，登录已过期，请重新登录',
+              okText: '重新登录',
+              mask: false,
+              onOk: () => {
+                Vue.ls.remove(ACCESS_TOKEN)
+                window.location.reload()
+              }
+            })
+          }
+          return resolveHttpError(error, '登录已过期')
         }
         break
       case 404:
@@ -88,7 +101,7 @@ const err = (error) => {
         break
     }
   }
-  return Promise.reject(error)
+  return resolveHttpError(error)
 };
 
 // request interceptor

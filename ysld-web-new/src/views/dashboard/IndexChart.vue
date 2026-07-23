@@ -829,7 +829,7 @@ export default {
         if(res.code === 200){
           this.statistics = res.data;
         }
-      })
+      }).catch(() => {})
       buyOrSalePrice({"roleType": Vue.ls.get('roleType'),"deptName":this.deptName}).then(res=>{
         if(res.code === 200){
           salePriceData=res.data.financialList;
@@ -845,7 +845,7 @@ export default {
           // this.retailPriceData = logisticsList;
           // this.buyPriceData = expressPriceList;
         }
-      })
+      }).catch(() => {})
     },
     initInfo () {
       this.loading = true
@@ -856,7 +856,7 @@ export default {
         if(res.code === 200){
           this.statistics = res.data;
         }
-      })
+      }).catch(() => {})
       const trendReq = buyOrSalePrice({"roleType": Vue.ls.get('roleType')}).then(res=>{
         if(res.code === 200){
           salePriceData=res.data.financialList;
@@ -872,12 +872,12 @@ export default {
           // this.retailPriceData = logisticsList;
           // this.buyPriceData = expressPriceList;
         }
-      })
+      }).catch(() => {})
       const payFeeReq = getPlatformConfigByKey({"platformKey": "pay_fee_url"}).then((res)=> {
         if (res && res.code === 200) {
           this.payFeeUrl = res.data.platformValue
         }
-      })
+      }).catch(() => {})
       Promise.all([statisticsReq, trendReq, payFeeReq]).finally(() => {
         this.loading = false
       })
@@ -910,14 +910,14 @@ export default {
                       if(res && res.code === 200) {
 
                       }
-                    })
+                    }).catch(() => {})
                   }
                 }
-              })
+              }).catch(() => {})
             }
           }
         }
-      })
+      }).catch(() => {})
     },
     handleHoverChange(visible) {
       this.hovered = visible

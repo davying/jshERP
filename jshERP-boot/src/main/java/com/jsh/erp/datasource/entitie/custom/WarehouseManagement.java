@@ -121,6 +121,10 @@ public class WarehouseManagement {
     @TableField("shipping_order_number")
     private String shippingOrderNumber;
 
+    @ApiModelProperty("物流明细JSON数组")
+    @TableField("logistics_details_json")
+    private String logisticsDetailsJson;
+
     @ApiModelProperty("租户id")
     @TableField("tenant_id")
     private Long tenantId;
