@@ -61,6 +61,9 @@ module.exports = {
     },
     devServer: {
         port: 3000,
+        client: {
+            overlay: false
+        },
         proxy: {
             '/jshERP-boot': {
                 // target: 'http://localhost:9999', // 请求本地 需要jshERP-boot后台项目

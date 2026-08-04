@@ -506,6 +506,7 @@
                 <a-select-option value="增票11个点">增票11个点</a-select-option>
                 <a-select-option value="普票2个点">普票2个点</a-select-option>
                 <a-select-option value="普票3个点">普票3个点</a-select-option>
+                <a-select-option value="普票4.5">普票4.5</a-select-option>
               </a-select>
             </a-form-item>
           </a-col>
@@ -832,6 +833,19 @@ import JDate from "@/components/jeecg/JDate";
 import { getAction, httpAction } from "@/api/manage";
 import Vue from "vue";
 import JInput from "../../../components/jeecg/JInput";
+
+const FINANCIAL_TAX_RATE_MAP = {
+  "增票11个点": 0.11,
+  "普票2个点": 0.02,
+  "普票3个点": 0.03,
+  "普票4.5": 0.045,
+};
+
+const calculateFinancialTaxAmount = (billingRate, totalFinancialPrice) => {
+  const rate = FINANCIAL_TAX_RATE_MAP[billingRate] || 0;
+  return Number(totalFinancialPrice || 0) * rate;
+};
+
 export default {
   name: "SaleOrder2Modal",
   mixins: [JEditableTableMixin, BillModalMixin],
@@ -1004,18 +1018,8 @@ export default {
     },
     changeMode (val) {
       this.$nextTick(() => {
-       let totalFinancialPrice= this.form.getFieldValue("totalFinancialPrice");
-        let financialTaxAmount= 0;
-
-        if(val=='普票2个点'){
-            financialTaxAmount=totalFinancialPrice*0.02;
-          } else if(val=='普票3个点'){
-            financialTaxAmount=totalFinancialPrice*0.03;
-          }else if(val=='增票11个点'){
-            financialTaxAmount=totalFinancialPrice*0.11;
-          }else{
-            financialTaxAmount=0;
-          }
+        let totalFinancialPrice= this.form.getFieldValue("totalFinancialPrice");
+        let financialTaxAmount = calculateFinancialTaxAmount(val, totalFinancialPrice);
         this.form.setFieldsValue({financialTaxAmount: financialTaxAmount.toFixed(4)});
       });
     },
@@ -1156,17 +1160,9 @@ export default {
         this.personList.value = this.model.salesMan;
         this.fileList = this.model.fileName;
         if(this.model.financialTaxAmount==0){
-          if(this.model.billingRate=='普票2个点'){
-            this.model.financialTaxAmount=this.model.totalFinancialPrice*0.02.toFixed(4);
-          } else if(this.model.billingRate=='普票3个点'){
-            this.model.financialTaxAmount=this.model.totalFinancialPrice*0.03.toFixed(4);
-          }else if(this.model.billingRate=='增票11个点'){
-            this.model.financialTaxAmount=this.model.totalFinancialPrice*0.11.toFixed(4);
-          }else{
-            this.model.financialTaxAmount=0;
-          }
+          this.model.financialTaxAmount = calculateFinancialTaxAmount(this.model.billingRate, this.model.totalFinancialPrice).toFixed(4);
         }else{
-          this.model.financialTaxAmount=this.model.financialTaxAmount.toFixed(4);
+          this.model.financialTaxAmount=Number(this.model.financialTaxAmount || 0).toFixed(4);
         }
         this.$nextTick(() => {
           this.form.setFieldsValue(

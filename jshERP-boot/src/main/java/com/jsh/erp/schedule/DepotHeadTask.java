@@ -1,6 +1,5 @@
 package com.jsh.erp.schedule;
 
-import cn.hutool.core.util.StrUtil;
 import com.google.common.base.Stopwatch;
 import com.jsh.erp.datasource.entitie.custom.WarehouseManagement;
 import com.jsh.erp.datasource.entities.*;
@@ -9,6 +8,7 @@ import com.jsh.erp.datasource.mappers.MsgMapper;
 import com.jsh.erp.datasource.mappers.UserMapper;
 import com.jsh.erp.datasource.mappers.custom.DepotHeadNewMapper;
 import com.jsh.erp.datasource.mappers.custom.WarehouseManagementMapper;
+import com.jsh.erp.service.depotHead.DepotHeadTaxRate;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -66,14 +66,7 @@ public class DepotHeadTask {
         Stopwatch watch = Stopwatch.createStarted();
         List<DepotHead> errors = depotHead2Map.getErrorFinancialTaxAmount();
         errors.forEach(e -> {
-            BigDecimal rate = new BigDecimal(0);
-            if (StrUtil.equals("增票11个点", e.getBillingRate())) {
-                rate = e.getTotalFinancialPrice().multiply(new BigDecimal("0.11")).setScale(4, BigDecimal.ROUND_UP);
-            } else if (StrUtil.equals("普票2个点", e.getBillingRate())) {
-                rate = e.getTotalFinancialPrice().multiply(new BigDecimal("0.02")).setScale(4, BigDecimal.ROUND_UP);
-            } else if (StrUtil.equals("普票3个点", e.getBillingRate())) {
-                rate = e.getTotalFinancialPrice().multiply(new BigDecimal("0.03")).setScale(4, BigDecimal.ROUND_UP);
-            }
+            BigDecimal rate = DepotHeadTaxRate.calculateFinancialTaxAmountScaleUp(e.getBillingRate(), e.getTotalFinancialPrice());
             e.setFinancialTaxAmount(rate);
             depotHead2Map.updateById(e);
         });

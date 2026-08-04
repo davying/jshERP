@@ -196,14 +196,8 @@ public class DepotHeadComponent implements ICommonQuery {
             e.setLogisticsFreight(logisticsFreight);
             BigDecimal rate = null;
             if (e.getFinancialTaxAmount().compareTo(new BigDecimal(0)) <= 0) {
-                if (StrUtil.equals("增票11个点", e.getBillingRate())) {
-                    rate = e.getTotalFinancialPrice().multiply(new BigDecimal("0.11"));
-                } else if (StrUtil.equals("普票2个点", e.getBillingRate())) {
-                    rate = e.getTotalFinancialPrice().multiply(new BigDecimal("0.02"));
-                } else if (StrUtil.equals("普票3个点", e.getBillingRate())) {
-                    rate = e.getTotalFinancialPrice().multiply(new BigDecimal("0.03"));
-                }
-                e.setFinancialTaxAmount(rate == null ? new BigDecimal(0) : rate);
+                rate = DepotHeadTaxRate.calculateFinancialTaxAmount(e.getBillingRate(), e.getTotalFinancialPrice());
+                e.setFinancialTaxAmount(rate);
             } else {
                 rate = e.getFinancialTaxAmount();
             }
@@ -292,14 +286,7 @@ public class DepotHeadComponent implements ICommonQuery {
     @Override
     public int insert(JSONObject obj, HttpServletRequest request) throws Exception {
         DepotHead dh = JSONObject.parseObject(obj.toJSONString(), DepotHead.class);
-        BigDecimal rate = new BigDecimal(0);
-        if (StrUtil.equals("增票11个点", dh.getBillingRate())) {
-            rate = dh.getTotalFinancialPrice().multiply(new BigDecimal("0.11")).setScale(4, BigDecimal.ROUND_UP);
-        } else if (StrUtil.equals("普票2个点", dh.getBillingRate())) {
-            rate = dh.getTotalFinancialPrice().multiply(new BigDecimal("0.02")).setScale(4, BigDecimal.ROUND_UP);
-        } else if (StrUtil.equals("普票3个点", dh.getBillingRate())) {
-            rate = dh.getTotalFinancialPrice().multiply(new BigDecimal("0.03")).setScale(4, BigDecimal.ROUND_UP);
-        }
+        BigDecimal rate = DepotHeadTaxRate.calculateFinancialTaxAmountScaleUp(dh.getBillingRate(), dh.getTotalFinancialPrice());
         dh.setFinancialTaxAmount(rate);
         depotHeadNewService.saveOrUpdate(dh);
         return 0;
@@ -308,14 +295,7 @@ public class DepotHeadComponent implements ICommonQuery {
     @Override
     public int update(JSONObject obj, HttpServletRequest request) throws Exception {
         DepotHead commodity = JSONObject.parseObject(obj.toJSONString(), DepotHead.class);
-        BigDecimal rate = new BigDecimal(0);
-        if (StrUtil.equals("增票11个点", commodity.getBillingRate())) {
-            rate = commodity.getTotalFinancialPrice().multiply(new BigDecimal("0.11")).setScale(4, BigDecimal.ROUND_UP);
-        } else if (StrUtil.equals("普票2个点", commodity.getBillingRate())) {
-            rate = commodity.getTotalFinancialPrice().multiply(new BigDecimal("0.02")).setScale(4, BigDecimal.ROUND_UP);
-        } else if (StrUtil.equals("普票3个点", commodity.getBillingRate())) {
-            rate = commodity.getTotalFinancialPrice().multiply(new BigDecimal("0.03")).setScale(4, BigDecimal.ROUND_UP);
-        }
+        BigDecimal rate = DepotHeadTaxRate.calculateFinancialTaxAmountScaleUp(commodity.getBillingRate(), commodity.getTotalFinancialPrice());
         commodity.setFinancialTaxAmount(rate);
         depotHeadNewService.saveOrUpdate(commodity);
         return 0;

@@ -31,6 +31,7 @@ import com.jsh.erp.service.custom.DepotHeadNewService;
 import com.jsh.erp.service.custom.WarehouseManagementService;
 import com.jsh.erp.service.depot.DepotService;
 import com.jsh.erp.service.depotHead.DepotHeadService;
+import com.jsh.erp.service.depotHead.DepotHeadTaxRate;
 import com.jsh.erp.service.redis.RedisService;
 import com.jsh.erp.service.systemConfig.SystemConfigService;
 import com.jsh.erp.service.user.UserService;
@@ -696,6 +697,9 @@ public class DepotHeadController {
             Commodity co = commodityService.getOne(new LambdaQueryWrapper<Commodity>().eq(Commodity::getCommodityNo, body.getCommodityNo()));
             body.setCommodityName(co.getName());
         }
+        if (DepotHeadTaxRate.isFinancialTaxBillingRate(body.getBillingRate())) {
+            body.setFinancialTaxAmount(DepotHeadTaxRate.calculateFinancialTaxAmountScaleUp(body.getBillingRate(), body.getTotalFinancialPrice()));
+        }
         depotHeadNewService.saveOrUpdate(body);
         return result;
     }
@@ -1153,14 +1157,8 @@ public class DepotHeadController {
                     // 计算税率
                     BigDecimal rate = null;
                     if (e.getFinancialTaxAmount().compareTo(BigDecimal.ZERO) <= 0) {
-                        if (StrUtil.equals("增票11个点", e.getBillingRate())) {
-                            rate = e.getTotalFinancialPrice().multiply(new BigDecimal("0.11"));
-                        } else if (StrUtil.equals("普票2个点", e.getBillingRate())) {
-                            rate = e.getTotalFinancialPrice().multiply(new BigDecimal("0.02"));
-                        } else if (StrUtil.equals("普票3个点", e.getBillingRate())) {
-                            rate = e.getTotalFinancialPrice().multiply(new BigDecimal("0.03"));
-                        }
-                        e.setFinancialTaxAmount(rate == null ? BigDecimal.ZERO : rate);
+                        rate = DepotHeadTaxRate.calculateFinancialTaxAmount(e.getBillingRate(), e.getTotalFinancialPrice());
+                        e.setFinancialTaxAmount(rate);
                     } else {
                         rate = e.getFinancialTaxAmount();
                     }
@@ -1239,14 +1237,8 @@ public class DepotHeadController {
                     // 计算税率
                     BigDecimal rate = null;
                     if (e.getFinancialTaxAmount().compareTo(BigDecimal.ZERO) <= 0) {
-                        if (StrUtil.equals("增票11个点", e.getBillingRate())) {
-                            rate = e.getTotalFinancialPrice().multiply(new BigDecimal("0.11"));
-                        } else if (StrUtil.equals("普票2个点", e.getBillingRate())) {
-                            rate = e.getTotalFinancialPrice().multiply(new BigDecimal("0.02"));
-                        } else if (StrUtil.equals("普票3个点", e.getBillingRate())) {
-                            rate = e.getTotalFinancialPrice().multiply(new BigDecimal("0.03"));
-                        }
-                        e.setFinancialTaxAmount(rate == null ? BigDecimal.ZERO : rate);
+                        rate = DepotHeadTaxRate.calculateFinancialTaxAmount(e.getBillingRate(), e.getTotalFinancialPrice());
+                        e.setFinancialTaxAmount(rate);
                     } else {
                         rate = e.getFinancialTaxAmount();
                     }
