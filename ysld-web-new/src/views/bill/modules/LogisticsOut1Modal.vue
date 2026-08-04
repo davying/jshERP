@@ -188,7 +188,7 @@ export default {
       visible: false,
       prefixNo: 'DBCK',
       fileList:[],
-      logisticsDetailModes: ['三轮车', '壹米滴答', '百世快运', '报销'],
+      logisticsDetailModes: ['三轮车', '壹米滴答', '百世快运', '报销', '其他'],
       logisticsMaxDetailCount: 8,
       logisticsDetailUid: 0,
       batchLogisticsDetailVisible: false,
