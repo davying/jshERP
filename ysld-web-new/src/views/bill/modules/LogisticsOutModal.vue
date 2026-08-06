@@ -69,6 +69,19 @@
             <a-form-item
                 :labelCol="labelCol"
                 :wrapperCol="wrapperCol"
+                label="业务员"
+                data-step="1"
+                data-title="业务员"
+                data-intro="选择订单后自动带出业务员"
+            >
+              <a-input disabled v-decorator.trim="['salesMan']"
+              />
+            </a-form-item>
+          </a-col>
+          <a-col :md="6" :sm="6">
+            <a-form-item
+                :labelCol="labelCol"
+                :wrapperCol="wrapperCol"
                 label="货品编码"
                 data-step="1"
                 data-title="货品编码"
@@ -739,6 +752,7 @@ export default {
       this.form.setFieldsValue({
         commodityNo: this.buildCommodityLabel(orderInfo, depotInfo),
         customer: orderInfo.customer || depotInfo.customer || "",
+        salesMan: orderInfo.salesMan || depotInfo.salesMan || "",
         color: orderInfo.color || depotInfo.color || "",
         freightPayer: orderInfo.freightPayer || depotInfo.freightPayer || "",
         ...sizeValues,
@@ -809,6 +823,7 @@ export default {
         this.form.setFieldsValue({
           commodityNo: selectedDepot.name,
           customer: selectedDepot.customer || "",
+          salesMan: selectedDepot.salesMan || "",
           color: selectedDepot.color,
           freightPayer: selectedDepot.freightPayer || ""
         });
@@ -826,6 +841,7 @@ export default {
               commodityNo: item.commodityNo,
               commodityName: item.commodityName,
               customer: item.customer,
+              salesMan: item.salesMan,
               freightPayer: item.freightPayer,
               color:item.color,
             };
@@ -901,6 +917,7 @@ export default {
                 "commodityNo",
                 "commodityName",
                 "customer",
+                "salesMan",
                 "size2",
                 "size3",
                 "size4",
