@@ -292,7 +292,11 @@
           {title: '其他支出费用', dataIndex: 'otherExpensesInFinance', width: 110, ellipsis:true,align: "center"},
           {title: '税额', dataIndex: 'financialTaxAmount', width: 70, ellipsis:true,align: "center"},
           {title: '开票税种', dataIndex: 'billingRate', width: 90, ellipsis:true,align: "center"},
-          {title: '开票抬头', dataIndex: 'financial_invoice_payable', width: 120, ellipsis:true,align: "center"},
+          {title: '开票抬头', dataIndex: 'financialInvoicePayable', width: 120, ellipsis:true,align: "center",
+            customRender:function (text) {
+              return text === 0 || text === '0' ? '' : text
+            }
+          },
           {title: '成本金额', dataIndex: 'financialCostAmount', width: 80, ellipsis:true,align: "center"},
           {title: '订单提成', dataIndex: 'orderCommission', width: 90, ellipsis:true,align: "center"},
           { title: '订单状态', dataIndex: 'status', width: 100, align: "center",
