@@ -1249,7 +1249,8 @@ export default {
                   "contactPerson",
                   "isChangeBag",
                   "invoiceRemark",
-                  "paymentDate"
+                  "paymentDate",
+                  "paymentCompany"
               )
           );
         });
