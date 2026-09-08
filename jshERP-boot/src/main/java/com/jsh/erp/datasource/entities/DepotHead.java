@@ -452,6 +452,10 @@ public class DepotHead {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private Date paymentDate;
 
+    @ApiModelProperty("付款公司")
+    @TableField("payment_company")
+    private String paymentCompany;
+
     @TableField(exist = false)
     private String action;
 

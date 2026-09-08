@@ -506,7 +506,7 @@
                 <a-select-option value="增票11个点">增票11个点</a-select-option>
                 <a-select-option value="普票2个点">普票2个点</a-select-option>
                 <a-select-option value="普票3个点">普票3个点</a-select-option>
-                <a-select-option value="普票4.5">普票4.5</a-select-option>
+                <a-select-option value="普票3.5">普票3.5</a-select-option>
               </a-select>
             </a-form-item>
           </a-col>
@@ -791,6 +791,17 @@
               />
             </a-form-item>
           </a-col>
+          <a-col :md="6" :sm="6">
+            <a-form-item
+                :labelCol="labelCol"
+                :wrapperCol="wrapperCol"
+                label="付款公司"
+            >
+              <a-input placeholder="请输入付款公司"
+                       v-decorator="['paymentCompany']"
+              />
+            </a-form-item>
+          </a-col>
         </a-row>
 
       </a-form>
@@ -838,7 +849,7 @@ const FINANCIAL_TAX_RATE_MAP = {
   "增票11个点": 0.11,
   "普票2个点": 0.02,
   "普票3个点": 0.03,
-  "普票4.5": 0.045,
+  "普票3.5": 0.035,
 };
 
 const calculateFinancialTaxAmount = (billingRate, totalFinancialPrice) => {

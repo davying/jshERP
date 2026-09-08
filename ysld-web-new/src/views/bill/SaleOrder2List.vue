@@ -258,8 +258,8 @@
             @change="handleTableChange">
             <span slot="action" slot-scope="text, record">
               <a v-if="record.status" @click="myHandleDetail(record, '销售订单', prefixNo)">查看</a>
-              <a-divider v-if="record.status!=0 && record.action!='total'" type="vertical" />
-              <a v-if="record.status!=0 && record.action!='total'" @click="myHandleEdit1(record)">编辑</a>
+              <a-divider v-if="record.status!=0 && record.action!='total' && loginUser && loginUser.loginName=='zhangsudan'" type="vertical" />
+              <a v-if="record.status!=0 && record.action!='total' && loginUser && loginUser.loginName=='zhangsudan'" @click="myHandleEdit1(record)">编辑</a>
 <!--              <a-divider v-if="btnEnableList.indexOf(1)>-1" type="vertical" />-->
 <!--&lt;!&ndash;              <a v-if="btnEnableList.indexOf(1)>-1" @click="myHandleCopyAdd(record)">复制</a>&ndash;&gt;-->
 <!--              <a-divider v-if="btnEnableList.indexOf(1)>-1" type="vertical" />-->
@@ -367,6 +367,7 @@
           text: '',
           value: ''
         },
+        loginUser: Vue.ls.get('loginUser'),
         prefixNo: 'XSDD',
         labelCol: {
           span: 5
@@ -449,6 +450,7 @@
           {title: '订单物流费', dataIndex: 'logisticsFreight', width: 90, ellipsis:true,align: "center"},
           {title: '订单提成', dataIndex: 'orderCommission', width: 90, ellipsis:true,align: "center"},
           {title: '付款日期', dataIndex: 'paymentDate', width: 100, ellipsis:true,align: "center"},
+          {title: '付款公司', dataIndex: 'paymentCompany', width: 120, ellipsis:true,align: "center"},
           // {title: '单位', dataIndex: 'unit', width: 50, ellipsis:true,align: "center"},
           // {title: '下单备注', dataIndex: 'orderRemark', width: 90, ellipsis:true,align: "center"},
           // {title: '运费付款方', dataIndex: 'freightPayer', width: 90, ellipsis:true,align: "center"},
@@ -623,22 +625,33 @@
           }
         });
       },
+      myHandleDetail(record, type, prefixNo) {
+        if(this.btnEnableList.indexOf(7)===-1) {
+          this.$refs.modalDetail.isCanBackCheck = false
+        }
+        this.$refs.modalDetail.show(record, type, prefixNo, 'finance')
+        this.$refs.modalDetail.title=type+"-详情"
+      },
       myHandleEdit1(record) {
-        if(record.status != '0') {
-          this.$refs.modalForm.action = "edit";
-          if(this.btnEnableList.indexOf(2)===-1) {
-            this.$refs.modalForm.isCanCheck = false
-          }
-          //查询单条单据信息
-          getAction(this.url.getDetailByNumberNew, { number: record.number }).then(res => {
-            if (res && res.code == 1) {
-              console.log(res.data)
-              let item = res.data
-              this.handleEdit(item)
+        if (this.loginUser && this.loginUser.loginName === 'zhangsudan') {
+          if(record.status != '0') {
+            this.$refs.modalForm.action = "edit";
+            if(this.btnEnableList.indexOf(2)===-1) {
+              this.$refs.modalForm.isCanCheck = false
             }
-          })
+            //查询单条单据信息
+            getAction(this.url.getDetailByNumberNew, { number: record.number }).then(res => {
+              if (res && res.code == 1) {
+                console.log(res.data)
+                let item = res.data
+                this.handleEdit(item)
+              }
+            })
+          } else {
+            this.$message.warning("抱歉，只有业务员提交的单据才能编辑！")
+          }
         } else {
-          this.$message.warning("抱歉，只有业务员提交的单据才能编辑！")
+          this.$message.warning('抱歉，只有 zhangsudan 账号才能编辑！')
         }
       },
       getSystemConfig() {

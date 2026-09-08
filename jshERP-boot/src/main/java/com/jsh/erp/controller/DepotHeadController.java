@@ -1049,13 +1049,14 @@ public class DepotHeadController {
                 "订单物流费",
                 "订单提成",
                 "尾款是否结清",
-                "付款日期"
+                "付款日期",
+                "付款公司"
         };
         String title = "销售订单";
         List<List<String>> objects = new ArrayList<>();
         if (null != depots) {
             for (DepotHead s : depots) {
-                String[] objs = new String[69];
+                String[] objs = new String[70];
                 objs[0] = s.getSaleType();
                 objs[1] = s.getNumber();
                 objs[2] = DateUtil.format(s.getOperTime(), "yyyy-MM-dd");
@@ -1125,6 +1126,7 @@ public class DepotHeadController {
                 objs[66] = StrUtil.toString(s.getOrderCommission().setScale(4, BigDecimal.ROUND_UP));
                 objs[67] = StrUtil.isBlank(s.getEndStaff()) ? "否" : s.getEndStaff();
                 objs[68] = DateUtil.format(s.getPaymentDate(), "yyyy-MM-dd");
+                objs[69] = s.getPaymentCompany();
                 objects.add(Arrays.asList(objs));
             }
         }

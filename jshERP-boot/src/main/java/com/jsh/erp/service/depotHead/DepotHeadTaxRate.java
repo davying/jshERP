@@ -33,7 +33,7 @@ public final class DepotHeadTaxRate {
         taxRateMap.put("增票11个点", new BigDecimal("0.11"));
         taxRateMap.put("普票2个点", new BigDecimal("0.02"));
         taxRateMap.put("普票3个点", new BigDecimal("0.03"));
-        taxRateMap.put("普票4.5", new BigDecimal("0.045"));
+        taxRateMap.put("普票3.5", new BigDecimal("0.035"));
         return Collections.unmodifiableMap(taxRateMap);
     }
 }

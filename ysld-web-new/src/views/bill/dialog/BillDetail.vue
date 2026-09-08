@@ -730,6 +730,12 @@
             <a-col :span="6" style="border: 0.2px solid grey">
               <div style="height: 30px;line-height: 30px;">&nbsp;是否开票：&nbsp;{{model.billingRate}}</div>
             </a-col>
+            <a-col v-if="saleOrderDetailScene === 'finance'" :span="6" style="border: 0.2px solid grey">
+              <div style="height: 30px;line-height: 30px;">&nbsp;付款日期：&nbsp;<span style="font-weight: bolder;color: red;">{{model.paymentDate}}</span></div>
+            </a-col>
+            <a-col v-if="saleOrderDetailScene === 'finance'" :span="6" style="border: 0.2px solid grey">
+              <div style="height: 30px;line-height: 30px;">付款公司：<span style="font-weight: bolder;color: red;">{{model.paymentCompany}}</span></div>
+            </a-col>
             <a-col :span="6" style="border: 0.2px solid grey">
               <div style="height: 30px;line-height: 30px;">收货人姓名：<span style="font-weight: bolder;color: red;"></span></div>
             </a-col>
@@ -1347,6 +1353,7 @@ export default {
       model: {},
       isCanBackCheck: true,
       billType: '',
+      saleOrderDetailScene: '',
       billPrintFlag: false,
       fileList: [],
       saleFileList: [],
@@ -1828,7 +1835,8 @@ export default {
         }
       })
     },
-    show(record, type, prefixNo) {
+    show(record, type, prefixNo, saleOrderDetailScene) {
+      this.saleOrderDetailScene = saleOrderDetailScene || ''
       //查询单条单据信息
       findBillDetailByNumber({ number: record.number||record.id }).then((res) => {
         if (res && res.code === 200) {

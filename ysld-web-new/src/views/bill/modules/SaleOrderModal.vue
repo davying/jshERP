@@ -442,6 +442,7 @@
                 <a-select-option value="增票11个点">增票11个点</a-select-option>
                 <a-select-option value="普票2个点">普票2个点</a-select-option>
                 <a-select-option value="普票3个点">普票3个点</a-select-option>
+                <a-select-option value="普票3.5">普票3.5</a-select-option>
               </a-select>
             </a-form-item>
           </a-col>
