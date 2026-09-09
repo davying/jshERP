@@ -25,7 +25,7 @@
 <!--          :loading="confirmLoading"-->
 <!--          @click="handleOkAndCheck"-->
 <!--      >保存并审核</a-button>-->
-      <a-button type="primary" :loading="confirmLoading" @click="handleOk"
+      <a-button v-if="loginUser && loginUser.loginName=='zhangsudan'" type="primary" :loading="confirmLoading" @click="handleOk"
       >保存</a-button
       >
       <!--发起多级审核-->
@@ -1347,6 +1347,10 @@ export default {
 
 
     handleOk() {
+      if (!(this.loginUser && this.loginUser.loginName === 'zhangsudan')) {
+        this.$message.warning('抱歉，只有 zhangsudan 账号才能提交！');
+        return;
+      }
       this.form.validateFields((err, values) => {
         if (!err) {
           let param = {
