@@ -8,17 +8,22 @@
           <!-- 搜索区域 -->
           <a-form layout="inline" @keyup.enter.native="searchQuery">
             <a-row :gutter="24">
-              <a-col :md="6" :sm="24">
+              <a-col :md="4" :sm="24">
+                <a-form-item label="单据编号" :labelCol="labelCol" :wrapperCol="wrapperCol">
+                  <a-input placeholder="请输入单据编号" v-model="queryParam.number"></a-input>
+                </a-form-item>
+              </a-col>
+              <a-col :md="5" :sm="24">
                 <a-form-item label="客户名称" :labelCol="labelCol" :wrapperCol="wrapperCol">
                   <a-input placeholder="请输入客户名称" v-model="queryParam.customer"></a-input>
                 </a-form-item>
               </a-col>
-              <a-col :md="6" :sm="24">
+              <a-col :md="4" :sm="24">
                 <a-form-item label="货品编码" :labelCol="labelCol" :wrapperCol="wrapperCol">
                   <a-input placeholder="货品编码" v-model="queryParam.commodityNo"></a-input>
                 </a-form-item>
               </a-col>
-              <a-col :md="6" :sm="24">
+              <a-col :md="7" :sm="24">
                 <a-form-item label="单据日期" :labelCol="labelCol" :wrapperCol="wrapperCol">
                   <a-range-picker
                     style="width:100%"
@@ -30,7 +35,7 @@
                 </a-form-item>
               </a-col>
               <span style="float: left;overflow: hidden;" class="table-page-search-submitButtons">
-                <a-col :md="6" :sm="24">
+                <a-col :md="4" :sm="24">
                   <a-button type="primary" @click="searchQuery">查询</a-button>
                   <a-button style="margin-left: 8px" @click="searchReset">重置</a-button>
                 </a-col>
