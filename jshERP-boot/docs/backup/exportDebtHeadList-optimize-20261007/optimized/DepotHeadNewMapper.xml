@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jsh.erp.datasource.mappers.custom.DepotHeadNewMapper">
+
+    <sql id="currentYearCreateTimeCondition">
+        <if test="param.currentYear != null and param.currentYear">
+            AND create_time &gt;= MAKEDATE(YEAR(CURDATE()), 1)
+            AND create_time &lt; MAKEDATE(YEAR(CURDATE()) + 1, 1)
+        </if>
+    </sql>
+
+    <sql id="currentYearOperTimeCondition">
+        <if test="param.currentYear != null and param.currentYear">
+            AND oper_time &gt;= MAKEDATE(YEAR(CURDATE()), 1)
+            AND oper_time &lt; MAKEDATE(YEAR(CURDATE()) + 1, 1)
+        </if>
+    </sql>
+
+    <select id="getErrorFinancialTaxAmount" resultType="com.jsh.erp.datasource.entities.DepotHead">
+    SELECT a.* from jsh_depot_head a,(
+        SELECT a.number FROM (
+        SELECT number,create_time,case when billing_rate='增票11个点' then total_financial_price*0.11
+        when billing_rate='普票2个点' then total_financial_price*0.02
+        when billing_rate='普票3个点' then total_financial_price*0.03
+        when billing_rate='普票3.5' then total_financial_price*0.035
+        else 0 end as rate,financial_tax_amount from  jsh_depot_head) a WHERE a.rate!=a.financial_tax_amount) b
+    WHERE a.number=b.number
+    </select>
+
+    <select id="getLogisticsFreight" resultType="java.lang.Double">
+    SELECT IFNULL(sum(a.logistics_freight),0) AS logisticsFreight
+        from jsh_warehouse_management a
+        where a.type like '%发货%' and a.depot_id=#{number}
+    </select>
+
+    <select id="sumLogisticsFreightByDepotIds" resultType="com.jsh.erp.datasource.entities.vo.DepotLogisticsFreightVO">
+        SELECT
+            depot_id AS depotId,
+            IFNULL(SUM(logistics_freight), 0) AS logisticsFreight
+        FROM jsh_warehouse_management
+        WHERE type LIKE '%发货%'
+          AND depot_id IN
+        <foreach collection="depotIds" item="depotId" open="(" separator="," close=")">
+            #{depotId}
+        </foreach>
+        GROUP BY depot_id
+    </select>
+
+    <select id="exportCommodityList" resultType="com.jsh.erp.datasource.entities.vo.CommodityExportVO">
+        SELECT
+            any_value(commodity_name) as commodityName,
+            sum(numbers) as numbers,
+            date_format(create_time,'%Y') as years,
+            sum(total_financial_price) as amount,
+            count(id) as depots
+        from jsh_depot_head
+        WHERE delete_flag=0
+        <if test="param.beginTime !=null and param.beginTime !='' and param.endTime !=null and param.endTime !=''">
+            AND DATE_FORMAT(create_time,'%Y-%m-%d') between #{param.beginTime} and #{param.endTime}
+        </if>
+        <include refid="currentYearCreateTimeCondition"/>
+        <if test="param.creators != null " >
+            AND creator in
+            <foreach collection="param.creators" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        GROUP BY commodity_name,date_format(create_time,'%Y')
+        ORDER BY date_format(create_time,'%Y') asc,sum(total_financial_price) DESC
+    </select>
+
+    <select id="exportCommodityNoList" resultType="com.jsh.erp.datasource.entities.vo.CommodityExportVO">
+        SELECT
+        any_value(commodity_name) as commodityName,
+        date_format(create_time,'%Y') as years,
+        any_value(commodity_no) as commodityNo,
+        any_value(color) as color,
+        sum(numbers) as numbers,
+        sum(total_financial_price) as amount,
+        count(id) as depots
+        from jsh_depot_head
+        WHERE delete_flag=0
+        <if test="param.beginTime !=null and param.beginTime !='' and param.endTime !=null and param.endTime !=''">
+            AND DATE_FORMAT(create_time,'%Y-%m-%d') between #{param.beginTime} and #{param.endTime}
+        </if>
+        <include refid="currentYearCreateTimeCondition"/>
+        <if test="param.commodityNo !=null and param.commodityNo !=''">
+            AND commodity_no=#{param.commodityNo}
+        </if>
+        <if test="param.years !=null and param.years !=''">
+            AND date_format(create_time,'%Y')=#{param.years}
+        </if>
+        <if test="param.commodityName !=null and param.commodityName !=''">
+            AND commodity_name like concat('%',#{param.commodityName},'%')
+        </if>
+        <if test="param.creators != null " >
+            AND creator in
+            <foreach collection="param.creators" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        GROUP BY commodity_no,date_format(create_time,'%Y')
+        ORDER BY date_format(create_time,'%Y') asc ,count(id) DESC
+        <if test="param.limit !=null and param.limit !=''">
+         limit #{param.limit}
+        </if>
+    </select>
+
+    <select id="exportSalesManList" resultType="com.jsh.erp.datasource.entities.vo.SalesManExportVO">
+        SELECT
+        any_value(sales_man) as salesMan,
+        sum(numbers) as numbers,
+        date_format(oper_time,'%Y') as years,
+        sum(total_financial_price) as amount,
+        count(id) as depots
+        from jsh_depot_head
+        WHERE delete_flag=0
+        <if test="param.beginTime !=null and param.beginTime !='' and param.endTime !=null and param.endTime !=''">
+            AND DATE_FORMAT(oper_time,'%Y-%m-%d') between #{param.beginTime} and #{param.endTime}
+        </if>
+        <include refid="currentYearOperTimeCondition"/>
+        <if test="param.creators != null " >
+            AND creator in
+            <foreach collection="param.creators" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        GROUP BY sales_man,date_format(oper_time,'%Y')
+        ORDER BY date_format(oper_time,'%Y') asc,sum(total_financial_price) DESC
+    </select>
+
+    <!-- 仅查订单主表；物流费由 Java 按本次订单号批量汇总后回填 logisticsFreightNew -->
+    <select id="mixList" resultType="com.jsh.erp.datasource.entities.DepotHead">
+        SELECT a.*
+        FROM jsh_depot_head a
+        ${ew.getCustomSqlSegment}
+    </select>
+</mapper>

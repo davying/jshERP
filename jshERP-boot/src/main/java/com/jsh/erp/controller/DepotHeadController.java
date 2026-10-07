@@ -924,60 +924,9 @@ public class DepotHeadController {
         query.last("limit 20000");
 
         List<DepotHead> depots = depotHeadNewService.mixList(query);
-
-        // 分片大小
-        int batchSize = 500;
-        processDepotsInParallel2(depots, batchSize);
+        processDepotsForExport(depots);
         if (StrUtil.contains(userInfo.getRoleName(), "业务员") || StrUtil.contains(userInfo.getRoleName(), "财务") || StrUtil.contains(userInfo.getRoleName(), "管理员")) {
-            DepotHead dh = new DepotHead();
-            dh.setSaleType("合计：");
-//            long projectTotal = list.stream().filter(e -> e.getConstYear().equals(item.getConstYear()))
-//                    .mapToLong(BhPrProjectInfo::getProjectCount).sum();
-            Long size1 = depots.stream().filter(e -> e.getSize1() != null).mapToLong(DepotHead::getSize1).sum();
-            dh.setSize1(size1.intValue());
-            Long size2 = depots.stream().filter(e -> e.getSize2() != null).mapToLong(DepotHead::getSize2).sum();
-            dh.setSize2(size2.intValue());
-            Long size3 = depots.stream().filter(e -> e.getSize3() != null).mapToLong(DepotHead::getSize3).sum();
-            dh.setSize3(size3.intValue());
-            Long size4 = depots.stream().filter(e -> e.getSize4() != null).mapToLong(DepotHead::getSize4).sum();
-            dh.setSize4(size4.intValue());
-            Long size5 = depots.stream().filter(e -> e.getSize5() != null).mapToLong(DepotHead::getSize5).sum();
-            dh.setSize5(size5.intValue());
-            Long size6 = depots.stream().filter(e -> e.getSize6() != null).mapToLong(DepotHead::getSize6).sum();
-            dh.setSize6(size6.intValue());
-            Long size7 = depots.stream().filter(e -> e.getSize7() != null).mapToLong(DepotHead::getSize7).sum();
-            dh.setSize7(size7.intValue());
-            Long size8 = depots.stream().filter(e -> e.getSize8() != null).mapToLong(DepotHead::getSize8).sum();
-            dh.setSize8(size8.intValue());
-            Long size9 = depots.stream().filter(e -> e.getSize9() != null).mapToLong(DepotHead::getSize9).sum();
-            dh.setSize9(size9.intValue());
-            Long size10 = depots.stream().filter(e -> e.getSize10() != null).mapToLong(DepotHead::getSize10).sum();
-            dh.setSize10(size10.intValue());
-            Long size11 = depots.stream().filter(e -> e.getSize11() != null).mapToLong(DepotHead::getSize11).sum();
-            dh.setSize11(size11.intValue());
-            Long nms = depots.stream().filter(Objects::nonNull).mapToLong(DepotHead::getNumbers).sum();
-            dh.setNumbers(nms.intValue());
-            dh.setTotalFinancialPrice(depots.stream().filter(Objects::nonNull).map(DepotHead::getTotalFinancialPrice).reduce(BigDecimal.ZERO, BigDecimal::add));
-            dh.setTotalPrintingPrice(depots.stream().filter(Objects::nonNull).map(DepotHead::getTotalPrintingPrice).reduce(BigDecimal.ZERO, BigDecimal::add));
-            dh.setHotStampingPaintingTotalPrice(depots.stream().filter(Objects::nonNull).map(DepotHead::getHotStampingPaintingTotalPrice).reduce(BigDecimal.ZERO, BigDecimal::add));
-            dh.setTotalStackPrice(depots.stream().filter(Objects::nonNull).map(DepotHead::getTotalStackPrice).reduce(BigDecimal.ZERO, BigDecimal::add));
-            dh.setEmbroideryTotalPrice(depots.stream().filter(Objects::nonNull).map(DepotHead::getEmbroideryTotalPrice).reduce(BigDecimal.ZERO, BigDecimal::add));
-            dh.setFinancialDeposit(depots.stream().filter(Objects::nonNull).map(DepotHead::getFinancialDeposit).reduce(BigDecimal.ZERO, BigDecimal::add));
-            dh.setFinancialBalance(depots.stream().filter(Objects::nonNull).map(DepotHead::getFinancialBalance).reduce(BigDecimal.ZERO, BigDecimal::add));
-            dh.setFinancialStaff(depots.stream().filter(Objects::nonNull).map(DepotHead::getFinancialStaff).reduce(BigDecimal.ZERO, BigDecimal::add));
-            dh.setFinancialDeductionsFee(depots.stream().filter(Objects::nonNull).map(DepotHead::getFinancialDeductionsFee).reduce(BigDecimal.ZERO, BigDecimal::add));
-            dh.setFinancialRebate(depots.stream().filter(Objects::nonNull).map(DepotHead::getFinancialRebate).reduce(BigDecimal.ZERO, BigDecimal::add));
-            dh.setOtherExpensesInFinance(depots.stream().filter(Objects::nonNull).map(DepotHead::getOtherExpensesInFinance).reduce(BigDecimal.ZERO, BigDecimal::add));
-            dh.setOtherExpensesInFinance2(depots.stream().filter(Objects::nonNull).map(DepotHead::getOtherExpensesInFinance2).reduce(BigDecimal.ZERO, BigDecimal::add));
-            dh.setFinancialTaxAmount(depots.stream().filter(Objects::nonNull).map(DepotHead::getFinancialTaxAmount).reduce(BigDecimal.ZERO, BigDecimal::add));
-            dh.setFinancialCostAmount(depots.stream().filter(Objects::nonNull).map(DepotHead::getFinancialCostAmount).reduce(BigDecimal.ZERO, BigDecimal::add));
-            dh.setLogisticsFreight(depots.stream().filter(Objects::nonNull).map(DepotHead::getLogisticsFreight).reduce(BigDecimal.ZERO, BigDecimal::add));
-            dh.setOrderCommission(depots.stream().filter(Objects::nonNull).map(DepotHead::getOrderCommission).reduce(BigDecimal.ZERO, BigDecimal::add));
-            dh.setPrinter(" ");
-            dh.setStackStaff(" ");
-            dh.setIroningStaff(" ");
-            dh.setStackStaff(" ");
-            depots.add(dh);
+            depots.add(buildExportTotalRow(depots));
         }
         //会员
         String[] names = {
@@ -1145,81 +1094,159 @@ public class DepotHeadController {
         response.flushBuffer();
     }
 
-    private void processDepotsInParallel2(List<DepotHead> depots, int batchSize) {
-        // 1. 定义线程池
-        ExecutorService executor = Executors.newFixedThreadPool(10); // 根据实际需求调整线程数
-        List<Future<Void>> futures = new ArrayList<>();
-
-        // 2. 分片并提交任务
-        List<List<DepotHead>> partitions = Lists.partition(depots, batchSize);
-        for (List<DepotHead> batch : partitions) {
-            Future<Void> future = executor.submit(() -> {
-                batch.forEach(e -> {
-
-                    // 计算税率
-                    BigDecimal rate = null;
-                    if (e.getFinancialTaxAmount().compareTo(BigDecimal.ZERO) <= 0) {
-                        rate = DepotHeadTaxRate.calculateFinancialTaxAmount(e.getBillingRate(), e.getTotalFinancialPrice());
-                        e.setFinancialTaxAmount(rate);
-                    } else {
-                        rate = e.getFinancialTaxAmount();
-                    }
-
-                    // 物流费
-                    e.setLogisticsFreight(e.getLogisticsFreightNew());
-
-                    // 计算订单提成
-                    BigDecimal ocm = (e.getTotalFinancialPrice()
-                            .subtract(rate != null ? rate : BigDecimal.ZERO)
-                            .subtract(e.getTotalPrintingPrice())
-                            .subtract(e.getHotStampingPaintingTotalPrice())
-                            .subtract(e.getTotalStackPrice())
-                            .subtract(e.getEmbroideryTotalPrice())
-                            .subtract(e.getFinancialDeductionsFee())
-                            .subtract(e.getFinancialRebate())
-                            .subtract(e.getFinancialCostAmount())
-                            .subtract(e.getOtherExpensesInFinance())
-                            .subtract(e.getOtherExpensesInFinance2())
-                            .subtract(e.getLogisticsFreight()))
-                            .setScale(4, BigDecimal.ROUND_UP);
-
-                    // 2026年之前：保持原有逻辑（按 divideType 计算）
-                    if (e.getDivideType() == 1) {
-                        ocm = ocm.multiply(new BigDecimal("0.5"));
-                    } else if (e.getDivideType() == 2) {
-                        ocm = ocm.multiply(new BigDecimal("0.4"));
-                    }
-                    e.setOrderCommission(ocm);
-
-                    // 设置状态名称
-                    if (StrUtil.equals(e.getStatus(), "0")) {
-                        e.setStatusName("暂存");
-                    } else if (StrUtil.equals(e.getStatus(), "1")) {
-                        e.setStatusName("财务已归档");
-                    } else if (StrUtil.equals(e.getStatus(), "9")) {
-                        e.setStatusName("业务员已提交");
-                    } else if (StrUtil.equals(e.getStatus(), "4")) {
-                        e.setStatusName("仓库已提交");
-                    }
-                });
-                return null; // Void 类型返回值
-            });
-            futures.add(future);
+    /**
+     * 导出前补齐物流费、税额、提成。计算规则与原 processDepotsInParallel2 保持一致。
+     */
+    private void processDepotsForExport(List<DepotHead> depots) {
+        if (CollUtil.isEmpty(depots)) {
+            return;
         }
-
-        // 3. 等待所有任务完成
-        try {
-            for (Future<Void> future : futures) {
-                future.get(); // 阻塞等待任务完成，可捕获异常
+        for (DepotHead e : depots) {
+            BigDecimal rate = null;
+            if (e.getFinancialTaxAmount().compareTo(BigDecimal.ZERO) <= 0) {
+                rate = DepotHeadTaxRate.calculateFinancialTaxAmount(e.getBillingRate(), e.getTotalFinancialPrice());
+                e.setFinancialTaxAmount(rate);
+            } else {
+                rate = e.getFinancialTaxAmount();
             }
-        } catch (InterruptedException | ExecutionException e) {
-            log.error("多线程处理异常", e);
-            Thread.currentThread().interrupt();
-        } finally {
-            executor.shutdown(); // 关闭线程池
+
+            // 物流费（与原先 setLogisticsFreight(logisticsFreightNew) 一致；无发货记录时为 0）
+            e.setLogisticsFreight(e.getLogisticsFreightNew() == null ? BigDecimal.ZERO : e.getLogisticsFreightNew());
+
+            BigDecimal ocm = (e.getTotalFinancialPrice()
+                    .subtract(rate != null ? rate : BigDecimal.ZERO)
+                    .subtract(e.getTotalPrintingPrice())
+                    .subtract(e.getHotStampingPaintingTotalPrice())
+                    .subtract(e.getTotalStackPrice())
+                    .subtract(e.getEmbroideryTotalPrice())
+                    .subtract(e.getFinancialDeductionsFee())
+                    .subtract(e.getFinancialRebate())
+                    .subtract(e.getFinancialCostAmount())
+                    .subtract(e.getOtherExpensesInFinance())
+                    .subtract(e.getOtherExpensesInFinance2())
+                    .subtract(e.getLogisticsFreight()))
+                    .setScale(4, BigDecimal.ROUND_UP);
+
+            if (e.getDivideType() == 1) {
+                ocm = ocm.multiply(new BigDecimal("0.5"));
+            } else if (e.getDivideType() == 2) {
+                ocm = ocm.multiply(new BigDecimal("0.4"));
+            }
+            e.setOrderCommission(ocm);
+
+            if (StrUtil.equals(e.getStatus(), "0")) {
+                e.setStatusName("暂存");
+            } else if (StrUtil.equals(e.getStatus(), "1")) {
+                e.setStatusName("财务已归档");
+            } else if (StrUtil.equals(e.getStatus(), "9")) {
+                e.setStatusName("业务员已提交");
+            } else if (StrUtil.equals(e.getStatus(), "4")) {
+                e.setStatusName("仓库已提交");
+            }
+        }
+    }
+
+    /**
+     * 导出合计行：单次遍历累加，避免多次 stream 扫全表
+     */
+    private DepotHead buildExportTotalRow(List<DepotHead> depots) {
+        DepotHead dh = new DepotHead();
+        dh.setSaleType("合计：");
+        int size1 = 0, size2 = 0, size3 = 0, size4 = 0, size5 = 0, size6 = 0;
+        int size7 = 0, size8 = 0, size9 = 0, size10 = 0, size11 = 0, numbers = 0;
+        BigDecimal totalFinancialPrice = BigDecimal.ZERO;
+        BigDecimal totalPrintingPrice = BigDecimal.ZERO;
+        BigDecimal hotStampingPaintingTotalPrice = BigDecimal.ZERO;
+        BigDecimal totalStackPrice = BigDecimal.ZERO;
+        BigDecimal embroideryTotalPrice = BigDecimal.ZERO;
+        BigDecimal financialDeposit = BigDecimal.ZERO;
+        BigDecimal financialBalance = BigDecimal.ZERO;
+        BigDecimal financialStaff = BigDecimal.ZERO;
+        BigDecimal financialDeductionsFee = BigDecimal.ZERO;
+        BigDecimal financialRebate = BigDecimal.ZERO;
+        BigDecimal otherExpensesInFinance = BigDecimal.ZERO;
+        BigDecimal otherExpensesInFinance2 = BigDecimal.ZERO;
+        BigDecimal financialTaxAmount = BigDecimal.ZERO;
+        BigDecimal financialCostAmount = BigDecimal.ZERO;
+        BigDecimal logisticsFreight = BigDecimal.ZERO;
+        BigDecimal orderCommission = BigDecimal.ZERO;
+
+        if (CollUtil.isNotEmpty(depots)) {
+            for (DepotHead e : depots) {
+                if (e == null) {
+                    continue;
+                }
+                size1 += nzInt(e.getSize1());
+                size2 += nzInt(e.getSize2());
+                size3 += nzInt(e.getSize3());
+                size4 += nzInt(e.getSize4());
+                size5 += nzInt(e.getSize5());
+                size6 += nzInt(e.getSize6());
+                size7 += nzInt(e.getSize7());
+                size8 += nzInt(e.getSize8());
+                size9 += nzInt(e.getSize9());
+                size10 += nzInt(e.getSize10());
+                size11 += nzInt(e.getSize11());
+                numbers += nzInt(e.getNumbers());
+                totalFinancialPrice = totalFinancialPrice.add(nz(e.getTotalFinancialPrice()));
+                totalPrintingPrice = totalPrintingPrice.add(nz(e.getTotalPrintingPrice()));
+                hotStampingPaintingTotalPrice = hotStampingPaintingTotalPrice.add(nz(e.getHotStampingPaintingTotalPrice()));
+                totalStackPrice = totalStackPrice.add(nz(e.getTotalStackPrice()));
+                embroideryTotalPrice = embroideryTotalPrice.add(nz(e.getEmbroideryTotalPrice()));
+                financialDeposit = financialDeposit.add(nz(e.getFinancialDeposit()));
+                financialBalance = financialBalance.add(nz(e.getFinancialBalance()));
+                financialStaff = financialStaff.add(nz(e.getFinancialStaff()));
+                financialDeductionsFee = financialDeductionsFee.add(nz(e.getFinancialDeductionsFee()));
+                financialRebate = financialRebate.add(nz(e.getFinancialRebate()));
+                otherExpensesInFinance = otherExpensesInFinance.add(nz(e.getOtherExpensesInFinance()));
+                otherExpensesInFinance2 = otherExpensesInFinance2.add(nz(e.getOtherExpensesInFinance2()));
+                financialTaxAmount = financialTaxAmount.add(nz(e.getFinancialTaxAmount()));
+                financialCostAmount = financialCostAmount.add(nz(e.getFinancialCostAmount()));
+                logisticsFreight = logisticsFreight.add(nz(e.getLogisticsFreight()));
+                orderCommission = orderCommission.add(nz(e.getOrderCommission()));
+            }
         }
 
-        log.info("所有分片处理完成");
+        dh.setSize1(size1);
+        dh.setSize2(size2);
+        dh.setSize3(size3);
+        dh.setSize4(size4);
+        dh.setSize5(size5);
+        dh.setSize6(size6);
+        dh.setSize7(size7);
+        dh.setSize8(size8);
+        dh.setSize9(size9);
+        dh.setSize10(size10);
+        dh.setSize11(size11);
+        dh.setNumbers(numbers);
+        dh.setTotalFinancialPrice(totalFinancialPrice);
+        dh.setTotalPrintingPrice(totalPrintingPrice);
+        dh.setHotStampingPaintingTotalPrice(hotStampingPaintingTotalPrice);
+        dh.setTotalStackPrice(totalStackPrice);
+        dh.setEmbroideryTotalPrice(embroideryTotalPrice);
+        dh.setFinancialDeposit(financialDeposit);
+        dh.setFinancialBalance(financialBalance);
+        dh.setFinancialStaff(financialStaff);
+        dh.setFinancialDeductionsFee(financialDeductionsFee);
+        dh.setFinancialRebate(financialRebate);
+        dh.setOtherExpensesInFinance(otherExpensesInFinance);
+        dh.setOtherExpensesInFinance2(otherExpensesInFinance2);
+        dh.setFinancialTaxAmount(financialTaxAmount);
+        dh.setFinancialCostAmount(financialCostAmount);
+        dh.setLogisticsFreight(logisticsFreight);
+        dh.setOrderCommission(orderCommission);
+        dh.setPrinter(" ");
+        dh.setStackStaff(" ");
+        dh.setIroningStaff(" ");
+        return dh;
+    }
+
+    private BigDecimal nz(BigDecimal value) {
+        return value == null ? BigDecimal.ZERO : value;
+    }
+
+    private int nzInt(Integer value) {
+        return value == null ? 0 : value;
     }
 
     private void processDepotsInParallel(List<DepotHead> depots, int batchSize) {
@@ -1396,59 +1423,9 @@ public class DepotHeadController {
         query.orderByAsc(DepotHead::getNumber, DepotHead::getId);
         query.last("limit 20000");
         List<DepotHead> depots = depotHeadNewService.mixList(query);
-        // 分片大小
-        int batchSize = 500;
-        processDepotsInParallel2(depots, batchSize);
+        processDepotsForExport(depots);
         if (StrUtil.contains(userInfo.getRoleName(), "财务") || StrUtil.contains(userInfo.getRoleName(), "管理员")) {
-            DepotHead dh = new DepotHead();
-            dh.setSaleType("合计：");
-//            long projectTotal = list.stream().filter(e -> e.getConstYear().equals(item.getConstYear()))
-//                    .mapToLong(BhPrProjectInfo::getProjectCount).sum();
-            Long size1 = depots.stream().filter(e -> e.getSize1() != null).mapToLong(DepotHead::getSize1).sum();
-            dh.setSize1(size1.intValue());
-            Long size2 = depots.stream().filter(e -> e.getSize2() != null).mapToLong(DepotHead::getSize2).sum();
-            dh.setSize2(size2.intValue());
-            Long size3 = depots.stream().filter(e -> e.getSize3() != null).mapToLong(DepotHead::getSize3).sum();
-            dh.setSize3(size3.intValue());
-            Long size4 = depots.stream().filter(e -> e.getSize4() != null).mapToLong(DepotHead::getSize4).sum();
-            dh.setSize4(size4.intValue());
-            Long size5 = depots.stream().filter(e -> e.getSize5() != null).mapToLong(DepotHead::getSize5).sum();
-            dh.setSize5(size5.intValue());
-            Long size6 = depots.stream().filter(e -> e.getSize6() != null).mapToLong(DepotHead::getSize6).sum();
-            dh.setSize6(size6.intValue());
-            Long size7 = depots.stream().filter(e -> e.getSize7() != null).mapToLong(DepotHead::getSize7).sum();
-            dh.setSize7(size7.intValue());
-            Long size8 = depots.stream().filter(e -> e.getSize8() != null).mapToLong(DepotHead::getSize8).sum();
-            dh.setSize8(size8.intValue());
-            Long size9 = depots.stream().filter(e -> e.getSize9() != null).mapToLong(DepotHead::getSize9).sum();
-            dh.setSize9(size9.intValue());
-            Long size10 = depots.stream().filter(e -> e.getSize10() != null).mapToLong(DepotHead::getSize10).sum();
-            dh.setSize10(size10.intValue());
-            Long size11 = depots.stream().filter(e -> e.getSize11() != null).mapToLong(DepotHead::getSize11).sum();
-            dh.setSize11(size11.intValue());
-            Long nms = depots.stream().filter(Objects::nonNull).mapToLong(DepotHead::getNumbers).sum();
-            dh.setNumbers(nms.intValue());
-            dh.setTotalFinancialPrice(depots.stream().filter(Objects::nonNull).map(DepotHead::getTotalFinancialPrice).reduce(BigDecimal.ZERO, BigDecimal::add));
-            dh.setTotalPrintingPrice(depots.stream().filter(Objects::nonNull).map(DepotHead::getTotalPrintingPrice).reduce(BigDecimal.ZERO, BigDecimal::add));
-            dh.setHotStampingPaintingTotalPrice(depots.stream().filter(Objects::nonNull).map(DepotHead::getHotStampingPaintingTotalPrice).reduce(BigDecimal.ZERO, BigDecimal::add));
-            dh.setTotalStackPrice(depots.stream().filter(Objects::nonNull).map(DepotHead::getTotalStackPrice).reduce(BigDecimal.ZERO, BigDecimal::add));
-            dh.setEmbroideryTotalPrice(depots.stream().filter(Objects::nonNull).map(DepotHead::getEmbroideryTotalPrice).reduce(BigDecimal.ZERO, BigDecimal::add));
-            dh.setFinancialDeposit(depots.stream().filter(Objects::nonNull).map(DepotHead::getFinancialDeposit).reduce(BigDecimal.ZERO, BigDecimal::add));
-            dh.setFinancialBalance(depots.stream().filter(Objects::nonNull).map(DepotHead::getFinancialBalance).reduce(BigDecimal.ZERO, BigDecimal::add));
-            dh.setFinancialStaff(depots.stream().filter(Objects::nonNull).map(DepotHead::getFinancialStaff).reduce(BigDecimal.ZERO, BigDecimal::add));
-            dh.setFinancialDeductionsFee(depots.stream().filter(Objects::nonNull).map(DepotHead::getFinancialDeductionsFee).reduce(BigDecimal.ZERO, BigDecimal::add));
-            dh.setFinancialRebate(depots.stream().filter(Objects::nonNull).map(DepotHead::getFinancialRebate).reduce(BigDecimal.ZERO, BigDecimal::add));
-            dh.setOtherExpensesInFinance(depots.stream().filter(Objects::nonNull).map(DepotHead::getOtherExpensesInFinance).reduce(BigDecimal.ZERO, BigDecimal::add));
-            dh.setOtherExpensesInFinance2(depots.stream().filter(Objects::nonNull).map(DepotHead::getOtherExpensesInFinance2).reduce(BigDecimal.ZERO, BigDecimal::add));
-            dh.setFinancialTaxAmount(depots.stream().filter(Objects::nonNull).map(DepotHead::getFinancialTaxAmount).reduce(BigDecimal.ZERO, BigDecimal::add));
-            dh.setFinancialCostAmount(depots.stream().filter(Objects::nonNull).map(DepotHead::getFinancialCostAmount).reduce(BigDecimal.ZERO, BigDecimal::add));
-            dh.setLogisticsFreight(depots.stream().filter(Objects::nonNull).map(DepotHead::getLogisticsFreight).reduce(BigDecimal.ZERO, BigDecimal::add));
-            dh.setOrderCommission(depots.stream().filter(Objects::nonNull).map(DepotHead::getOrderCommission).reduce(BigDecimal.ZERO, BigDecimal::add));
-            dh.setPrinter(" ");
-            dh.setStackStaff(" ");
-            dh.setIroningStaff(" ");
-            dh.setStackStaff(" ");
-            depots.add(dh);
+            depots.add(buildExportTotalRow(depots));
         }
         //会员
         String[] names = {

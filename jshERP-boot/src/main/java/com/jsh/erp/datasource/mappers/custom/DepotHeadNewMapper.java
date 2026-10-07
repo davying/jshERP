@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.toolkit.Constants;
 import com.jsh.erp.datasource.entities.DepotHead;
 import com.jsh.erp.datasource.entities.vo.CommodityExportVO;
 import com.jsh.erp.datasource.entities.vo.DepotHeadVO;
+import com.jsh.erp.datasource.entities.vo.DepotLogisticsFreightVO;
 import com.jsh.erp.datasource.entities.vo.SalesManExportVO;
 import org.apache.ibatis.annotations.Param;
 
@@ -24,6 +25,11 @@ public interface DepotHeadNewMapper extends BaseMapper<DepotHead> {
     List<DepotHead> getErrorFinancialTaxAmount();
 
     Double getLogisticsFreight(String number);
+
+    /**
+     * 按订单号批量汇总发货物流费，避免全表 GROUP BY
+     */
+    List<DepotLogisticsFreightVO> sumLogisticsFreightByDepotIds(@Param("depotIds") List<String> depotIds);
 
     List<CommodityExportVO> exportCommodityList(@Param("param") DepotHeadVO param);
 

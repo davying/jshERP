@@ -17,6 +17,7 @@ import com.jsh.erp.datasource.entitie.custom.WarehouseManagement;
 import com.jsh.erp.datasource.entities.DepotHead;
 import com.jsh.erp.datasource.entities.vo.CommodityExportVO;
 import com.jsh.erp.datasource.entities.vo.DepotHeadVO;
+import com.jsh.erp.datasource.entities.vo.DepotLogisticsFreightVO;
 import com.jsh.erp.datasource.entities.vo.SalesManExportVO;
 import com.jsh.erp.datasource.mappers.custom.DepotHeadNewMapper;
 import com.jsh.erp.service.custom.DepotHeadNewService;
@@ -27,11 +28,14 @@ import org.springframework.stereotype.Service;
 
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
+import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -200,7 +204,52 @@ public class DepotHeadNewServiceImpl extends ServiceImpl<DepotHeadNewMapper, Dep
 
     @Override
     public List<DepotHead> mixList(LambdaQueryWrapper<DepotHead> wrapper) {
-        return depotHeadNewMapper.mixList(wrapper);
+        // 保持原 mixList 自定义 SQL 路径（与旧版 Wrapper/逻辑删除行为一致），
+        // 物流费改为仅按本次订单号批量汇总，避免全表 GROUP BY
+        List<DepotHead> list = depotHeadNewMapper.mixList(wrapper);
+        fillLogisticsFreightNew(list);
+        return list;
+    }
+
+    /**
+     * 按订单号分批汇总发货物流费，写入 logisticsFreightNew
+     */
+    private void fillLogisticsFreightNew(List<DepotHead> depots) {
+        if (CollUtil.isEmpty(depots)) {
+            return;
+        }
+        List<String> numbers = depots.stream()
+                .map(DepotHead::getNumber)
+                .filter(StrUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(numbers)) {
+            for (DepotHead depot : depots) {
+                depot.setLogisticsFreightNew(BigDecimal.ZERO);
+            }
+            return;
+        }
+        Map<String, BigDecimal> freightMap = new HashMap<>();
+        for (List<String> part : Lists.partition(numbers, 1000)) {
+            List<DepotLogisticsFreightVO> rows = depotHeadNewMapper.sumLogisticsFreightByDepotIds(part);
+            if (CollUtil.isEmpty(rows)) {
+                continue;
+            }
+            for (DepotLogisticsFreightVO row : rows) {
+                if (row == null || StrUtil.isBlank(row.getDepotId())) {
+                    continue;
+                }
+                freightMap.put(row.getDepotId(),
+                        row.getLogisticsFreight() == null ? BigDecimal.ZERO : row.getLogisticsFreight());
+            }
+        }
+        for (DepotHead depot : depots) {
+            if (StrUtil.isBlank(depot.getNumber())) {
+                depot.setLogisticsFreightNew(BigDecimal.ZERO);
+            } else {
+                depot.setLogisticsFreightNew(freightMap.getOrDefault(depot.getNumber(), BigDecimal.ZERO));
+            }
+        }
     }
 
     @Override

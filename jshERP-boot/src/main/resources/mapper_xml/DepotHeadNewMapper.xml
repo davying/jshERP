@@ -33,6 +33,19 @@
         where a.type like '%发货%' and a.depot_id=#{number}
     </select>
 
+    <select id="sumLogisticsFreightByDepotIds" resultType="com.jsh.erp.datasource.entities.vo.DepotLogisticsFreightVO">
+        SELECT
+            depot_id AS depotId,
+            IFNULL(SUM(logistics_freight), 0) AS logisticsFreight
+        FROM jsh_warehouse_management
+        WHERE type LIKE '%发货%'
+          AND depot_id IN
+        <foreach collection="depotIds" item="depotId" open="(" separator="," close=")">
+            #{depotId}
+        </foreach>
+        GROUP BY depot_id
+    </select>
+
     <select id="exportCommodityList" resultType="com.jsh.erp.datasource.entities.vo.CommodityExportVO">
         SELECT
             any_value(commodity_name) as commodityName,
@@ -116,19 +129,10 @@
         ORDER BY date_format(oper_time,'%Y') asc,sum(total_financial_price) DESC
     </select>
 
+    <!-- 仅查订单主表；物流费由 Java 按本次订单号批量汇总后回填 logisticsFreightNew -->
     <select id="mixList" resultType="com.jsh.erp.datasource.entities.DepotHead">
-        SELECT
-            *,
-            COALESCE(b.logisticsFreight, 0) AS logisticsFreightNew
+        SELECT a.*
         FROM jsh_depot_head a
-                 LEFT JOIN (
-            SELECT
-                depot_id,
-                SUM(logistics_freight) AS logisticsFreight
-            FROM jsh_warehouse_management
-            WHERE type like '%发货%'
-            GROUP BY depot_id
-        ) b ON a.number = b.depot_id
         ${ew.getCustomSqlSegment}
     </select>
 </mapper>
