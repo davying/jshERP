@@ -776,7 +776,10 @@
                 :wrapperCol="wrapperCol"
                 label="开票备注"
             >
-              <a-input disabled v-decorator.trim="['invoiceRemark']"
+              <a-textarea
+                disabled
+                :autoSize="{ minRows: 2, maxRows: 6 }"
+                v-decorator.trim="['invoiceRemark']"
               />
             </a-form-item>
           </a-col>

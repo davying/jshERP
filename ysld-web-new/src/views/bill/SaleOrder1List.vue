@@ -229,6 +229,7 @@
           text: '',
           value: ''
         },
+        loginUser: Vue.ls.get('loginUser'),
         prefixNo: 'XSDD',
         labelCol: {
           span: 5
@@ -292,6 +293,7 @@
       }
     },
     created() {
+      this.appendYangshuaiPriceColumns()
       this.initSystemConfig()
       this.initCustomer()
       this.initUser()
@@ -307,6 +309,22 @@
     computed: {
     },
     methods: {
+      // 仅 yangshuai 账号展示销售单价、成本价
+      appendYangshuaiPriceColumns() {
+        if (!(this.loginUser && this.loginUser.loginName === 'yangshuai')) {
+          return
+        }
+        const insertIndex = this.columns.findIndex(col => col.dataIndex === 'numbers')
+        const priceColumns = [
+          { title: '销售单价', dataIndex: 'financialUnitPrice', width: 100, ellipsis: true, align: 'center' },
+          { title: '成本价', dataIndex: 'financialCostUnitPrice', width: 100, ellipsis: true, align: 'center' }
+        ]
+        if (insertIndex > -1) {
+          this.columns.splice(insertIndex + 1, 0, ...priceColumns)
+        } else {
+          this.columns.push(...priceColumns)
+        }
+      },
       retailExportExcel() {
         let param ={}
         param=this.queryParam

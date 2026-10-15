@@ -1041,6 +1041,7 @@ public class DepotHeadController {
                 "其他支出备注",
                 "是否含税",
                 "开票抬头",
+                "开票备注",
                 "LOGO制作",
                 "开票税种",
                 "税额",
@@ -1056,7 +1057,7 @@ public class DepotHeadController {
         List<List<String>> objects = new ArrayList<>();
         if (null != depots) {
             for (DepotHead s : depots) {
-                String[] objs = new String[70];
+                String[] objs = new String[71];
                 objs[0] = s.getSaleType();
                 objs[1] = s.getNumber();
                 objs[2] = DateUtil.format(s.getOperTime(), "yyyy-MM-dd");
@@ -1117,16 +1118,17 @@ public class DepotHeadController {
                 objs[57] = s.getFinancialOtherExpenditureRemarks();
                 objs[58] = s.getDoesFinancialAffairsIncludeTax();
                 objs[59] = s.getFinancialInvoicePayable();
-                objs[60] = s.getLogoMark();
-                objs[61] = s.getBillingRate();
-                objs[62] = StrUtil.toString(s.getFinancialTaxAmount().setScale(4, BigDecimal.ROUND_UP));
-                objs[63] = s.getFinancialCostUnitPrice() == null ? "" : StrUtil.toString(s.getFinancialCostUnitPrice().setScale(4, BigDecimal.ROUND_UP));
-                objs[64] = StrUtil.toString(s.getFinancialCostAmount().setScale(4, BigDecimal.ROUND_UP));
-                objs[65] = s.getLogisticsFreight() == null ? "0" : StrUtil.toString(s.getLogisticsFreight().setScale(4, BigDecimal.ROUND_UP));
-                objs[66] = StrUtil.toString(s.getOrderCommission().setScale(4, BigDecimal.ROUND_UP));
-                objs[67] = StrUtil.isBlank(s.getEndStaff()) ? "否" : s.getEndStaff();
-                objs[68] = DateUtil.format(s.getPaymentDate(), "yyyy-MM-dd");
-                objs[69] = s.getPaymentCompany();
+                objs[60] = s.getInvoiceRemark();
+                objs[61] = s.getLogoMark();
+                objs[62] = s.getBillingRate();
+                objs[63] = StrUtil.toString(s.getFinancialTaxAmount().setScale(4, BigDecimal.ROUND_UP));
+                objs[64] = s.getFinancialCostUnitPrice() == null ? "" : StrUtil.toString(s.getFinancialCostUnitPrice().setScale(4, BigDecimal.ROUND_UP));
+                objs[65] = StrUtil.toString(s.getFinancialCostAmount().setScale(4, BigDecimal.ROUND_UP));
+                objs[66] = s.getLogisticsFreight() == null ? "0" : StrUtil.toString(s.getLogisticsFreight().setScale(4, BigDecimal.ROUND_UP));
+                objs[67] = StrUtil.toString(s.getOrderCommission().setScale(4, BigDecimal.ROUND_UP));
+                objs[68] = StrUtil.isBlank(s.getEndStaff()) ? "否" : s.getEndStaff();
+                objs[69] = DateUtil.format(s.getPaymentDate(), "yyyy-MM-dd");
+                objs[70] = s.getPaymentCompany();
                 objects.add(Arrays.asList(objs));
             }
         }
