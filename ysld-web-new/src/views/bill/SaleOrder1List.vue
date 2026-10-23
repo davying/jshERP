@@ -293,7 +293,7 @@
       }
     },
     created() {
-      this.appendYangshuaiPriceColumns()
+      this.appendPriceColumnsByLoginUser()
       this.initSystemConfig()
       this.initCustomer()
       this.initUser()
@@ -309,16 +309,26 @@
     computed: {
     },
     methods: {
-      // 仅 yangshuai 账号展示销售单价、成本价
-      appendYangshuaiPriceColumns() {
-        if (!(this.loginUser && this.loginUser.loginName === 'yangshuai')) {
+      // yangshuai：销售单价+成本价；yangxiaolu：仅成本价
+      appendPriceColumnsByLoginUser() {
+        if (!this.loginUser || !this.loginUser.loginName) {
+          return
+        }
+        const loginName = this.loginUser.loginName
+        let priceColumns = []
+        if (loginName === 'yangshuai') {
+          priceColumns = [
+            { title: '销售单价', dataIndex: 'financialUnitPrice', width: 100, ellipsis: true, align: 'center' },
+            { title: '成本价', dataIndex: 'financialCostUnitPrice', width: 100, ellipsis: true, align: 'center' }
+          ]
+        } else if (loginName === 'yangxiaolu') {
+          priceColumns = [
+            { title: '成本价', dataIndex: 'financialCostUnitPrice', width: 100, ellipsis: true, align: 'center' }
+          ]
+        } else {
           return
         }
         const insertIndex = this.columns.findIndex(col => col.dataIndex === 'numbers')
-        const priceColumns = [
-          { title: '销售单价', dataIndex: 'financialUnitPrice', width: 100, ellipsis: true, align: 'center' },
-          { title: '成本价', dataIndex: 'financialCostUnitPrice', width: 100, ellipsis: true, align: 'center' }
-        ]
         if (insertIndex > -1) {
           this.columns.splice(insertIndex + 1, 0, ...priceColumns)
         } else {
