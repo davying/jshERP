@@ -182,6 +182,7 @@
             scopedSlots: { customRender: 'action' },
             fixed:true,
           },
+          { title: '销售类型', dataIndex: 'saleType', width: 90, ellipsis:true, fixed:true, align: "center"},
           { title: '单据编号', dataIndex: 'number', width: 80, ellipsis:true,fixed:true,align: "center"},
           { title: '业务员', dataIndex: 'salesMan', width: 90, ellipsis:true, fixed:true,align: "center"},
           { title: '货品信息', dataIndex: 'commodityNo', width: 130, fixed:true, ellipsis:true,align: "center",
